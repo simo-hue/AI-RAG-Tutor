@@ -68,16 +68,18 @@ export const config = {
 } as const;
 
 export function validateConfig() {
-  const required = [
-    'DATABASE_URL',
-    'OPENAI_API_KEY',
-    'PINECONE_API_KEY',
-    'PINECONE_ENVIRONMENT',
-  ];
+  if (config.nodeEnv === 'production') {
+    const required = [
+      'DATABASE_URL',
+      'OPENAI_API_KEY',
+      'PINECONE_API_KEY',
+      'PINECONE_ENVIRONMENT',
+    ];
 
-  const missing = required.filter(key => !process.env[key]);
+    const missing = required.filter(key => !process.env[key] || process.env[key] === 'test-key-placeholder');
 
-  if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    if (missing.length > 0) {
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
   }
 }

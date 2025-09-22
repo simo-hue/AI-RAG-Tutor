@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI-powered speech evaluation system with RAG-based document analysis",
   "private": true,
+  "packageManager": "npm@9.0.0",
   "workspaces": [
     "apps/*",
     "packages/*"
