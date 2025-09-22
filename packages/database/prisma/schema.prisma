@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  name        String
+  originalName String
+  type        DocumentType
+  content     String
+  fileSize    Int
+  uploadedAt  DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  chunks      DocumentChunk[]
+  recordings  AudioRecording[]
+
+  @@map("documents")
+}
+
+model DocumentChunk {
+  id         String   @id @default(cuid())
+  documentId String
+  content    String
+  embedding  Bytes?   // Store as bytes for efficiency
+  startIndex Int
+  endIndex   Int
+  page       Int?
+  section    String?
+  createdAt  DateTime @default(now())
+
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("document_chunks")
+}
+
+model AudioRecording {
+  id            String   @id @default(cuid())
+  documentId    String
+  audioUrl      String   // URL to stored audio file
+  transcription String?
+  duration      Float    // Duration in seconds
+  recordedAt    DateTime @default(now())
+
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  evaluation    Evaluation?
+
+  @@index([documentId])
+  @@map("audio_recordings")
+}
+
+model Evaluation {
+  id                String   @id @default(cuid())
+  audioRecordingId  String   @unique
+  overallScore      Float
+
+  // Criteria scores (stored as JSON for flexibility)
+  contentAccuracy   Json
+  clarity           Json
+  completeness      Json
+  organization      Json
+  relevance         Json
+
+  feedback                String
+  suggestedImprovements   String[] // Array of improvement suggestions
+  evaluatedAt             DateTime @default(now())
+
+  audioRecording    AudioRecording @relation(fields: [audioRecordingId], references: [id], onDelete: Cascade)
+
+  @@map("evaluations")
+}
+
+model ProcessingJob {
+  id          String      @id @default(cuid())
+  type        JobType
+  status      JobStatus   @default(PENDING)
+  data        Json        // Job-specific data
+  result      Json?       // Job result
+  error       String?     // Error message if failed
+  createdAt   DateTime    @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@index([status, type])
+  @@map("processing_jobs")
+}
+
+enum DocumentType {
+  PDF
+  DOCX
+  TXT
+}
+
+enum JobType {
+  DOCUMENT_PROCESSING
+  AUDIO_TRANSCRIPTION
+  EVALUATION_GENERATION
+  EMBEDDING_GENERATION
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}

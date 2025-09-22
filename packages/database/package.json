@@ -1,0 +1,29 @@
+{
+  "name": "@ai-speech-evaluator/database",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "migrate": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "seed": "tsx src/seed.ts",
+    "studio": "prisma studio",
+    "generate": "prisma generate",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.0",
+    "@ai-speech-evaluator/shared": "*"
+  },
+  "devDependencies": {
+    "prisma": "^5.7.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsx": "^4.6.0",
+    "eslint": "^8.0.0"
+  }
+}
