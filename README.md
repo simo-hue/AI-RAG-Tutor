@@ -1,4 +1,4 @@
-# AI Speech Evaluator
+# AI RAG Tutor
 
 Un sistema avanzato di valutazione speech-to-text basato su RAG (Retrieval-Augmented Generation) che analizza presentazioni orali confrontandole con documenti di riferimento.
 
@@ -64,8 +64,8 @@ ai-speech-evaluator/
 
 1. **Clone repository**
 ```bash
-git clone <repository-url>
-cd ai-speech-evaluator
+git clone https://github.com/simo-hue/AI-RAG-Tutor.git
+cd AI-RAG-Tutor
 ```
 
 2. **Installa dipendenze**
@@ -190,6 +190,6 @@ Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
 ## 🆘 Supporto
 
 Per problemi o domande:
-- Apri un [Issue](https://github.com/your-org/ai-speech-evaluator/issues)
+- Apri un [Issue](https://github.com/simo-hue/AI-RAG-Tutor/issues)
 - Consulta la [documentazione](./docs/)
 - Contatta il team di sviluppo
