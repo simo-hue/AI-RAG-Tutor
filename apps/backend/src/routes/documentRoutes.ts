@@ -3,6 +3,17 @@ import multer from 'multer';
 import path from 'path';
 import { documentController } from '../controllers/documentController';
 import { config } from '../config';
+import { uploadLimiter, generalLimiter } from '../middleware/rateLimiter';
+import {
+  validateDocumentUpload,
+  validateDocumentId,
+  validateDocumentSearch,
+  validateRelevantContext,
+  validateFileUpload,
+  validatePagination,
+  validateSorting
+} from '../middleware/validation';
+import { customSecurityHeaders } from '../middleware/security';
 
 const router = Router();
 
@@ -40,12 +51,72 @@ const upload = multer({
   fileFilter,
 });
 
-// Routes
-router.post('/upload', upload.single('document'), documentController.uploadDocument);
-router.get('/', documentController.getDocuments);
-router.get('/:id', documentController.getDocument);
-router.delete('/:id', documentController.deleteDocument);
-router.get('/:id/status', documentController.getProcessingStatus);
-router.post('/:id/process', documentController.processDocument);
+// Apply security headers to all routes
+router.use(customSecurityHeaders);
+
+// Routes with comprehensive middleware
+router.post('/upload',
+  uploadLimiter,
+  upload.single('document'),
+  validateFileUpload,
+  validateDocumentUpload,
+  documentController.uploadDocument
+);
+
+router.get('/',
+  generalLimiter,
+  validatePagination,
+  validateSorting,
+  documentController.getDocuments
+);
+
+router.get('/:id',
+  generalLimiter,
+  validateDocumentId,
+  documentController.getDocument
+);
+
+router.delete('/:id',
+  generalLimiter,
+  validateDocumentId,
+  documentController.deleteDocument
+);
+
+router.get('/:id/status',
+  generalLimiter,
+  validateDocumentId,
+  documentController.getProcessingStatus
+);
+
+router.post('/:id/process',
+  generalLimiter,
+  validateDocumentId,
+  documentController.processDocument
+);
+
+router.post('/:documentId/search',
+  generalLimiter,
+  validateDocumentSearch,
+  documentController.searchDocument
+);
+
+router.post('/:documentId/relevant-context',
+  generalLimiter,
+  validateRelevantContext,
+  documentController.getRelevantContext
+);
+
+router.get('/:id/chunks',
+  generalLimiter,
+  validateDocumentId,
+  validatePagination,
+  documentController.getDocumentChunks
+);
+
+router.get('/:id/metadata',
+  generalLimiter,
+  validateDocumentId,
+  documentController.getDocumentMetadata
+);
 
 export { router as documentRoutes };

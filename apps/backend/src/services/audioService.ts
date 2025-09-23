@@ -1,9 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { AudioRecording } from '@ai-speech-evaluator/shared';
-import { WhisperService } from '@ai-speech-evaluator/audio-services';
+import { WhisperService } from './whisperService';
 import { AppError } from '../middleware/errorHandler';
 import { config } from '../config';
+import { logger } from '../utils/logger';
 
 // Temporary in-memory storage (replace with database in production)
 const audioRecordings: AudioRecording[] = [];
@@ -37,9 +38,11 @@ export const audioService = {
       throw new AppError('Audio recording not found', 404);
     }
 
+    const startTime = Date.now();
+
     try {
-      // Initialize Whisper service
-      const whisperService = new WhisperService(config.openai.apiKey);
+      // Initialize local Whisper service
+      const whisperService = await WhisperService.getInstance();
 
       // Get audio file path
       const audioPath = path.join(config.storage.uploadDir, 'audio', path.basename(audioRecording.audioUrl));
@@ -51,27 +54,51 @@ export const audioService = {
         throw new AppError('Audio file not found on disk', 404);
       }
 
-      // Transcribe audio
+      logger.info('Starting audio transcription', {
+        audioRecordingId,
+        audioPath: path.basename(audioPath),
+        duration: audioRecording.duration
+      });
+
+      // Transcribe audio using local Whisper
       const transcriptionResult = await whisperService.transcribeAudio(audioPath, {
         language: 'it', // Italian for this project
-        response_format: 'verbose_json',
-        temperature: 0.2,
+        task: 'transcribe',
+        format: 'json'
       });
 
       // Update audio recording with transcription
       audioRecording.transcription = transcriptionResult.text;
 
+      const processingTime = Date.now() - startTime;
+
+      logger.info('Audio transcription completed', {
+        audioRecordingId,
+        transcriptionLength: transcriptionResult.text.length,
+        detectedLanguage: transcriptionResult.language,
+        processingTime: `${processingTime}ms`
+      });
+
       return {
         transcription: transcriptionResult.text,
-        language: transcriptionResult.language,
-        duration: transcriptionResult.duration,
-        segments: transcriptionResult.segments,
+        language: transcriptionResult.language || 'it',
+        duration: transcriptionResult.duration || audioRecording.duration,
+        segments: transcriptionResult.segments || [],
+        processingTime
       };
     } catch (error) {
+      const processingTime = Date.now() - startTime;
+
+      logger.error('Audio transcription failed', {
+        audioRecordingId,
+        processingTime: `${processingTime}ms`,
+        error: error.message
+      });
+
       if (error instanceof AppError) {
         throw error;
       }
-      throw new AppError('Transcription failed', 500);
+      throw new AppError(`Transcription failed: ${error.message}`, 500);
     }
   },
 

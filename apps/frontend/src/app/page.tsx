@@ -46,10 +46,12 @@ export default function HomePage() {
                   Inizia la Demo
                 </Button>
               </Link>
-              <Button variant="secondary" size="lg" className="px-8 py-4">
-                <FileText className="w-5 h-5 mr-2" />
-                Documentazione
-              </Button>
+              <Link href="/docs">
+                <Button variant="secondary" size="lg" className="px-8 py-4">
+                  <FileText className="w-5 h-5 mr-2" />
+                  Documentazione
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -12,18 +12,29 @@ export const config = {
   // Redis
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
 
-  // OpenAI
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY || '',
-    model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
-    embeddingModel: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
+  // Ollama (Local LLM)
+  ollama: {
+    host: process.env.OLLAMA_HOST || 'http://localhost:11434',
+    model: process.env.OLLAMA_MODEL || 'llama3.2:3b',
+    embeddingModel: process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text',
+    timeout: parseInt(process.env.OLLAMA_TIMEOUT || '120000'), // 2 minutes
   },
 
-  // Pinecone
-  pinecone: {
-    apiKey: process.env.PINECONE_API_KEY || '',
-    environment: process.env.PINECONE_ENVIRONMENT || '',
-    indexName: process.env.PINECONE_INDEX_NAME || 'ai-speech-evaluator',
+  // Vector Database (can be local or Pinecone)
+  vectorDb: {
+    type: process.env.VECTOR_DB_TYPE || 'memory', // 'memory' | 'pinecone'
+    pinecone: {
+      apiKey: process.env.PINECONE_API_KEY || '',
+      environment: process.env.PINECONE_ENVIRONMENT || '',
+      indexName: process.env.PINECONE_INDEX_NAME || 'ai-speech-evaluator',
+    },
+  },
+
+  // Local Whisper for transcription
+  whisper: {
+    modelPath: process.env.WHISPER_MODEL_PATH || './models/whisper',
+    modelName: process.env.WHISPER_MODEL || 'base',
+    language: process.env.WHISPER_LANGUAGE || 'auto',
   },
 
   // File Storage
@@ -68,13 +79,21 @@ export const config = {
 } as const;
 
 export function validateConfig() {
+  // Basic validation - only check Ollama connectivity
+  const ollamaHost = config.ollama.host;
+
+  if (!ollamaHost || !ollamaHost.startsWith('http')) {
+    throw new Error('OLLAMA_HOST must be a valid HTTP URL (e.g., http://localhost:11434)');
+  }
+
+  // For production, ensure we have a database if using persistent storage
   if (config.nodeEnv === 'production') {
-    const required = [
-      'DATABASE_URL',
-      'OPENAI_API_KEY',
-      'PINECONE_API_KEY',
-      'PINECONE_ENVIRONMENT',
-    ];
+    const required = ['DATABASE_URL'];
+
+    // Only require Pinecone if using it as vector DB
+    if (config.vectorDb.type === 'pinecone') {
+      required.push('PINECONE_API_KEY', 'PINECONE_ENVIRONMENT');
+    }
 
     const missing = required.filter(key => !process.env[key] || process.env[key] === 'test-key-placeholder');
 

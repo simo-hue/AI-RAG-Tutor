@@ -3,6 +3,7 @@
 import { GraduationCap, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui';
+import Link from 'next/link';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +13,7 @@ export const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
+          <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <div className="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-xl">
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
@@ -20,35 +21,37 @@ export const Header = () => {
               <h1 className="text-xl font-bold text-gradient">AI RAG Tutor</h1>
               <p className="text-xs text-secondary-500">Speech Evaluation System</p>
             </div>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <a
-              href="#features"
+            <Link
+              href="/#features"
               className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
             >
               Features
-            </a>
-            <a
-              href="#how-it-works"
+            </Link>
+            <Link
+              href="/#how-it-works"
               className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
             >
               Come Funziona
-            </a>
-            <a
-              href="#docs"
+            </Link>
+            <Link
+              href="/docs"
               className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
             >
               Documentazione
-            </a>
+            </Link>
           </nav>
 
           {/* CTA Button */}
           <div className="hidden md:block">
-            <Button>
-              Inizia Ora
-            </Button>
+            <Link href="/upload">
+              <Button>
+                Inizia Ora
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -63,31 +66,33 @@ export const Header = () => {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden py-4 space-y-4 animate-fade-in">
-            <a
-              href="#features"
+            <Link
+              href="/#features"
               className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               Features
-            </a>
-            <a
-              href="#how-it-works"
+            </Link>
+            <Link
+              href="/#how-it-works"
               className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               Come Funziona
-            </a>
-            <a
-              href="#docs"
+            </Link>
+            <Link
+              href="/docs"
               className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               Documentazione
-            </a>
+            </Link>
             <div className="pt-2">
-              <Button className="w-full">
-                Inizia Ora
-              </Button>
+              <Link href="/upload">
+                <Button className="w-full">
+                  Inizia Ora
+                </Button>
+              </Link>
             </div>
           </div>
         )}

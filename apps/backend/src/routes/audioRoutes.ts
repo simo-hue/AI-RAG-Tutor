@@ -3,6 +3,15 @@ import multer from 'multer';
 import path from 'path';
 import { audioController } from '../controllers/audioController';
 import { config } from '../config';
+import { transcriptionLimiter, uploadLimiter, generalLimiter } from '../middleware/rateLimiter';
+import {
+  validateAudioId,
+  validateAudioUpload,
+  validateDocumentId,
+  validateFileUpload,
+  validatePagination
+} from '../middleware/validation';
+import { customSecurityHeaders } from '../middleware/security';
 
 const router = Router();
 
@@ -44,12 +53,47 @@ const uploadAudio = multer({
   fileFilter: audioFileFilter,
 });
 
-// Routes
-router.post('/upload', uploadAudio.single('audio'), audioController.uploadAudio);
-router.post('/:id/transcribe', audioController.transcribeAudio);
-router.get('/:id', audioController.getAudioRecording);
-router.delete('/:id', audioController.deleteAudioRecording);
-router.get('/document/:documentId', audioController.getAudioRecordingsForDocument);
-router.get('/:id/status', audioController.getProcessingStatus);
+// Apply security headers to all routes
+router.use(customSecurityHeaders);
+
+// Routes with comprehensive middleware
+router.post('/upload',
+  uploadLimiter,
+  uploadAudio.single('audio'),
+  validateFileUpload,
+  validateAudioUpload,
+  audioController.uploadAudio
+);
+
+router.post('/:id/transcribe',
+  transcriptionLimiter,
+  validateAudioId,
+  audioController.transcribeAudio
+);
+
+router.get('/:id',
+  generalLimiter,
+  validateAudioId,
+  audioController.getAudioRecording
+);
+
+router.delete('/:id',
+  generalLimiter,
+  validateAudioId,
+  audioController.deleteAudioRecording
+);
+
+router.get('/document/:documentId',
+  generalLimiter,
+  validateDocumentId,
+  validatePagination,
+  audioController.getAudioRecordingsForDocument
+);
+
+router.get('/:id/status',
+  generalLimiter,
+  validateAudioId,
+  audioController.getProcessingStatus
+);
 
 export { router as audioRoutes };
