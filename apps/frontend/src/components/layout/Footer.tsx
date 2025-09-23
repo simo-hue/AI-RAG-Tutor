@@ -1,12 +1,12 @@
-import { GraduationCap, Github, ExternalLink } from 'lucide-react';
+import { GraduationCap, Github, ExternalLink, Linkedin, Mail, Instagram, Youtube, User } from 'lucide-react';
 
 export const Footer = () => {
   return (
     <footer className="bg-secondary-900 text-secondary-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 md:col-span-2 lg:col-span-1">
             <div className="flex items-center space-x-3 mb-4">
               <div className="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-xl">
                 <GraduationCap className="w-6 h-6 text-white" />
@@ -75,8 +75,12 @@ export const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#contact" className="text-secondary-400 hover:text-white transition-colors duration-200">
-                  Contatti
+                <a
+                  href="mailto:mattioli.simone.10@gmail.com"
+                  className="text-secondary-400 hover:text-white transition-colors duration-200 flex items-center space-x-1"
+                >
+                  <span>Contatti</span>
+                  <Mail className="w-3 h-3" />
                 </a>
               </li>
               <li>
@@ -85,6 +89,55 @@ export const Footer = () => {
                 </a>
               </li>
             </ul>
+          </div>
+
+          {/* Developer */}
+          <div>
+            <h4 className="text-white font-semibold mb-4">Sviluppatore</h4>
+            <div className="flex items-center space-x-2 mb-3">
+              <User className="w-4 h-4 text-secondary-400" />
+              <span className="text-secondary-300 font-medium">Simone Mattioli</span>
+            </div>
+            <div className="flex space-x-3 mb-3">
+              <a
+                href="https://github.com/simo-hue"
+                className="text-secondary-400 hover:text-white transition-colors duration-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/simonemattioli2003/"
+                className="text-secondary-400 hover:text-white transition-colors duration-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+              <a
+                href="mailto:mattioli.simone.10@gmail.com"
+                className="text-secondary-400 hover:text-white transition-colors duration-200"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.youtube.com/@simonemattioli2003"
+                className="text-secondary-400 hover:text-white transition-colors duration-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Youtube className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.instagram.com/simo___hue/"
+                className="text-secondary-400 hover:text-white transition-colors duration-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Instagram className="w-4 h-4" />
+              </a>
+            </div>
           </div>
         </div>
 
