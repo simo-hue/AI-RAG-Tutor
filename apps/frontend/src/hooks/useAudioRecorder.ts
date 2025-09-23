@@ -3,6 +3,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { audioService } from '../services/audioService';
 
+export interface AudioDevice {
+  deviceId: string;
+  label: string;
+  kind: string;
+}
+
 export interface RecordingState {
   isRecording: boolean;
   isPaused: boolean;
@@ -16,6 +22,8 @@ export interface RecordingState {
   isTranscribing: boolean;
   transcription: string | null;
   audioRecordingId: string | null;
+  availableDevices: AudioDevice[];
+  selectedDeviceId: string | null;
 }
 
 export interface AudioAnalyzerData {
@@ -37,6 +45,8 @@ export const useAudioRecorder = () => {
     isTranscribing: false,
     transcription: null,
     audioRecordingId: null,
+    availableDevices: [],
+    selectedDeviceId: null,
   });
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -46,6 +56,50 @@ export const useAudioRecorder = () => {
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  // Get available audio input devices
+  const getAudioDevices = useCallback(async () => {
+    if (!state.isSupported) return;
+
+    try {
+      // First, request permission to access media devices
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const audioInputs = devices
+        .filter((device: MediaDeviceInfo) => device.kind === 'audioinput')
+        .map((device: MediaDeviceInfo) => ({
+          deviceId: device.deviceId,
+          label: device.label || `Microfono ${device.deviceId.slice(0, 8)}`,
+          kind: device.kind,
+        }));
+
+      setState(prev => ({
+        ...prev,
+        availableDevices: audioInputs,
+        selectedDeviceId: prev.selectedDeviceId || (audioInputs.length > 0 ? audioInputs[0].deviceId : null),
+        hasPermission: true,
+      }));
+
+      return audioInputs;
+    } catch (error) {
+      console.error('Failed to get audio devices:', error);
+      setState(prev => ({
+        ...prev,
+        error: 'Impossibile accedere ai dispositivi audio. Permesso negato.',
+        hasPermission: false,
+      }));
+      return [];
+    }
+  }, [state.isSupported]);
+
+  // Select audio device
+  const selectDevice = useCallback((deviceId: string) => {
+    setState(prev => ({
+      ...prev,
+      selectedDeviceId: deviceId,
+    }));
+  }, []);
 
   // Initialize audio context and analyzer
   const initializeAudioAnalyzer = useCallback((stream: MediaStream) => {
@@ -96,15 +150,18 @@ export const useAudioRecorder = () => {
       setState(prev => ({ ...prev, error: null }));
 
       // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints: MediaStreamConstraints = {
         audio: {
+          deviceId: state.selectedDeviceId ? { exact: state.selectedDeviceId } : undefined,
           sampleRate: 44100,
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true,
         },
-      });
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
       streamRef.current = stream;
 
@@ -330,5 +387,7 @@ export const useAudioRecorder = () => {
     clearRecording,
     uploadAndTranscribe,
     getAnalyzerData,
+    getAudioDevices,
+    selectDevice,
   };
 };

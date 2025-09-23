@@ -12,7 +12,9 @@ import {
   Volume2,
   VolumeX,
   Clock,
-  AlertCircle
+  AlertCircle,
+  Settings,
+  ChevronDown
 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Badge, Progress } from '@/components/ui';
 import { AudioWaveform } from './AudioWaveform';
@@ -48,6 +50,8 @@ export const AudioRecorder = ({
     isUploading,
     isTranscribing,
     transcription,
+    availableDevices,
+    selectedDeviceId,
     startRecording,
     pauseRecording,
     resumeRecording,
@@ -55,11 +59,21 @@ export const AudioRecorder = ({
     clearRecording,
     uploadAndTranscribe,
     getAnalyzerData,
+    getAudioDevices,
+    selectDevice,
   } = useAudioRecorder();
 
   const [analyzerData, setAnalyzerData] = useState<{ volume: number; frequencies: number[] }>({ volume: 0, frequencies: [] });
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [showDeviceSelector, setShowDeviceSelector] = useState(false);
+
+  // Load available audio devices on component mount
+  useEffect(() => {
+    if (isSupported && hasPermission === null) {
+      getAudioDevices();
+    }
+  }, [isSupported, hasPermission, getAudioDevices]);
 
   // Update analyzer data during recording
   useEffect(() => {
@@ -160,13 +174,24 @@ export const AudioRecorder = ({
     if (error) return { text: 'Errore', variant: 'error' as const };
     if (!isSupported) return { text: 'Non Supportato', variant: 'error' as const };
     if (hasPermission === false) return { text: 'Permesso Negato', variant: 'error' as const };
-    if (isTranscribing) return { text: 'Trascrivendo', variant: 'warning' as const };
-    if (isUploading) return { text: 'Caricando', variant: 'warning' as const };
-    if (isRecording && isPaused) return { text: 'In Pausa', variant: 'warning' as const };
-    if (isRecording) return { text: 'Registrando', variant: 'success' as const };
-    if (transcription) return { text: 'Trascritto', variant: 'success' as const };
-    if (audioBlob) return { text: 'Completato', variant: 'success' as const };
-    return { text: 'Pronto', variant: 'default' as const };
+    if (isTranscribing) return { text: 'Trascrizione in corso...', variant: 'warning' as const };
+    if (isUploading) return { text: 'Salvataggio audio...', variant: 'warning' as const };
+    if (isRecording && isPaused) return { text: 'Registrazione in pausa', variant: 'warning' as const };
+    if (isRecording) return { text: 'Registrazione attiva', variant: 'success' as const };
+    if (transcription) return { text: 'Trascrizione completata', variant: 'success' as const };
+    if (audioBlob) return { text: 'Registrazione completata', variant: 'success' as const };
+    return { text: 'Pronto per registrare', variant: 'default' as const };
+  };
+
+  // Get detailed status description
+  const getDetailedStatusDescription = () => {
+    if (isUploading) return 'Salvataggio del file audio sul server...';
+    if (isTranscribing) return 'Conversione da audio a testo utilizzando Whisper AI locale...';
+    if (isRecording && !isPaused) return 'Registrazione audio in corso. Parla chiaramente nel microfono.';
+    if (isRecording && isPaused) return 'Registrazione messa in pausa. Clicca play per continuare.';
+    if (transcription) return 'La trascrizione è stata completata con successo. Il testo è pronto per l\'analisi.';
+    if (audioBlob) return 'La registrazione è stata completata. Puoi ascoltarla o avviare la trascrizione.';
+    return '';
   };
 
   const status = getRecordingStatus();
@@ -203,15 +228,22 @@ export const AudioRecorder = ({
             </div>
             <div>
               <CardTitle className="text-lg">Registrazione Audio</CardTitle>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge variant={status.variant} size="sm">
-                  {status.text}
-                </Badge>
-                {isRecording && (
-                  <div className="flex items-center space-x-1 text-xs text-secondary-500">
-                    <Clock className="w-3 h-3" />
-                    <span>{formatDuration(duration)}</span>
-                  </div>
+              <div className="space-y-2 mt-1">
+                <div className="flex items-center space-x-2">
+                  <Badge variant={status.variant} size="sm">
+                    {status.text}
+                  </Badge>
+                  {isRecording && (
+                    <div className="flex items-center space-x-1 text-xs text-secondary-500">
+                      <Clock className="w-3 h-3" />
+                      <span>{formatDuration(duration)}</span>
+                    </div>
+                  )}
+                </div>
+                {getDetailedStatusDescription() && (
+                  <p className="text-xs text-secondary-600 leading-relaxed">
+                    {getDetailedStatusDescription()}
+                  </p>
                 )}
               </div>
             </div>
@@ -292,6 +324,60 @@ export const AudioRecorder = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Microphone Selection */}
+        {availableDevices.length > 1 && !isRecording && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-semibold text-secondary-900 flex items-center">
+                <Settings className="w-4 h-4 mr-2" />
+                Seleziona Microfono
+              </h4>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeviceSelector(!showDeviceSelector)}
+              >
+                <ChevronDown className={cn(
+                  "w-4 h-4 transition-transform",
+                  showDeviceSelector && "rotate-180"
+                )} />
+              </Button>
+            </div>
+
+            {showDeviceSelector && (
+              <div className="space-y-2">
+                {availableDevices.map((device) => (
+                  <div
+                    key={device.deviceId}
+                    className={cn(
+                      "p-3 rounded-lg border cursor-pointer transition-all",
+                      selectedDeviceId === device.deviceId
+                        ? "bg-primary-50 border-primary-300 text-primary-700"
+                        : "bg-white border-secondary-200 hover:bg-secondary-50"
+                    )}
+                    onClick={() => selectDevice(device.deviceId)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full",
+                        selectedDeviceId === device.deviceId
+                          ? "bg-primary-500"
+                          : "bg-secondary-300"
+                      )} />
+                      <div>
+                        <p className="text-sm font-medium">{device.label}</p>
+                        <p className="text-xs text-secondary-500">
+                          ID: {device.deviceId.slice(0, 20)}...
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
@@ -357,15 +443,31 @@ export const AudioRecorder = ({
           </div>
         )}
 
-        {/* Recording Tips */}
+        {/* Recording Tips and Information */}
         {!isRecording && !audioBlob && hasPermission !== false && (
-          <div className="text-center text-sm text-secondary-500 space-y-2">
-            <p>💡 <strong>Suggerimenti per una registrazione ottimale:</strong></p>
-            <ul className="space-y-1 text-xs">
-              <li>• Parla chiaramente a circa 30cm dal microfono</li>
-              <li>• Evita rumori di fondo e eco</li>
-              <li>• Mantieni un volume costante durante la registrazione</li>
-            </ul>
+          <div className="p-4 bg-info-50 border border-info-200 rounded-lg">
+            <div className="text-center space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-info-800 mb-2">
+                  💡 Suggerimenti per una registrazione ottimale:
+                </p>
+                <ul className="space-y-1 text-xs text-info-700 text-left">
+                  <li>• Parla chiaramente a circa 30cm dal microfono selezionato</li>
+                  <li>• Evita rumori di fondo, eco e interruzioni</li>
+                  <li>• Mantieni un volume costante durante la registrazione</li>
+                  <li>• La registrazione verrà automaticamente trascritta utilizzando Whisper AI locale</li>
+                </ul>
+              </div>
+
+              {availableDevices.length > 1 && (
+                <div className="pt-2 border-t border-info-200">
+                  <p className="text-xs text-info-600">
+                    <strong>Microfono selezionato:</strong> {' '}
+                    {availableDevices.find(d => d.deviceId === selectedDeviceId)?.label || 'Microfono predefinito'}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </CardContent>

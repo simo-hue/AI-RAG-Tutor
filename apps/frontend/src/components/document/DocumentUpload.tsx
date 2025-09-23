@@ -137,11 +137,21 @@ export const DocumentUpload = ({
 
   const getStatusText = (status: UploadedFile['status']) => {
     switch (status) {
-      case 'uploading': return 'Caricamento...';
-      case 'processing': return 'Elaborazione...';
-      case 'completed': return 'Completato';
-      case 'error': return 'Errore';
+      case 'uploading': return 'Caricamento in corso...';
+      case 'processing': return 'Analisi del contenuto...';
+      case 'completed': return 'Pronto per l\'analisi';
+      case 'error': return 'Errore durante il caricamento';
       default: return 'In attesa';
+    }
+  };
+
+  const getDetailedStatusDescription = (status: UploadedFile['status']) => {
+    switch (status) {
+      case 'uploading': return 'Trasferimento del file in corso';
+      case 'processing': return 'Estrazione e indicizzazione del testo per l\'analisi RAG';
+      case 'completed': return 'Il documento è stato processato ed è pronto per essere utilizzato come riferimento';
+      case 'error': return 'Si è verificato un problema durante l\'elaborazione del file';
+      default: return '';
     }
   };
 
@@ -254,6 +264,13 @@ export const DocumentUpload = ({
                     {uploadedFile.error && (
                       <p className="text-xs text-error-600 mt-1">{uploadedFile.error}</p>
                     )}
+
+                    {/* Detailed status description */}
+                    {uploadedFile.status !== 'error' && (
+                      <p className="text-xs text-secondary-500 mt-1 leading-relaxed">
+                        {getDetailedStatusDescription(uploadedFile.status)}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -275,7 +292,7 @@ export const DocumentUpload = ({
           <Button
             disabled={uploadedFiles.some(f => f.status !== 'completed')}
           >
-            Continua con la Registrazione
+            Procedi al Passaggio Successivo
           </Button>
         </div>
       )}
