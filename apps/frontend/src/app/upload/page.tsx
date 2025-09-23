@@ -4,15 +4,25 @@ import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { DocumentUpload } from '@/components/document/DocumentUpload';
+import { AudioRecorder } from '@/components/audio/AudioRecorder';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
-import { FileText, ArrowRight, CheckCircle } from 'lucide-react';
+import { FileText, ArrowRight, CheckCircle, Mic } from 'lucide-react';
 
 export default function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
+  const [documentId, setDocumentId] = useState<string | null>(null);
+  const [transcription, setTranscription] = useState<string | null>(null);
 
   const handleFileUpload = (files: File[]) => {
     setUploadedFiles(prev => [...prev, ...files]);
+    // In a real implementation, you would upload the file to your backend
+    // and get a documentId back. For now, we'll generate a mock ID.
+    setDocumentId(`doc-${Date.now()}`);
+  };
+
+  const handleTranscriptionComplete = (transcriptionText: string) => {
+    setTranscription(transcriptionText);
   };
 
   const steps = [
@@ -26,7 +36,7 @@ export default function UploadPage() {
       number: 2,
       title: 'Registra Audio',
       description: 'Registra la tua presentazione orale',
-      icon: FileText,
+      icon: Mic,
     },
     {
       number: 3,
@@ -133,24 +143,47 @@ export default function UploadPage() {
             </Card>
           )}
 
-          {/* Step 2: Audio Recording (Placeholder) */}
+          {/* Step 2: Audio Recording */}
           {currentStep === 2 && (
             <Card>
               <CardHeader>
-                <CardTitle>Registrazione Audio</CardTitle>
-                <p className="text-secondary-600">
-                  Funzionalità di registrazione audio in sviluppo...
-                </p>
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                    <Mic className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <CardTitle>Registrazione Audio</CardTitle>
+                    <p className="text-sm text-secondary-600 mt-1">
+                      Registra la tua presentazione orale basandoti sui documenti caricati
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-8 h-8 text-secondary-500" />
+                <AudioRecorder
+                  onRecordingComplete={(audioBlob, duration) => {
+                    console.log('Recording completed:', { audioBlob, duration });
+                  }}
+                  onTranscriptionComplete={handleTranscriptionComplete}
+                  documentId={documentId || undefined}
+                  autoTranscribe={true}
+                  maxDuration={600} // 10 minutes
+                  className="mb-6"
+                />
+
+                {transcription && (
+                  <div className="mt-6 p-4 bg-info-50 border border-info-200 rounded-lg">
+                    <h4 className="text-sm font-semibold text-info-800 mb-2">
+                      Contenuto della presentazione:
+                    </h4>
+                    <p className="text-sm text-info-700 leading-relaxed">
+                      {transcription}
+                    </p>
                   </div>
-                  <p className="text-secondary-600">
-                    La funzionalità di registrazione audio sarà disponibile presto.
-                  </p>
-                  <div className="flex space-x-4 mt-6 justify-center">
+                )}
+
+                <div className="pt-6 border-t border-secondary-200">
+                  <div className="flex items-center justify-between">
                     <Button
                       variant="outline"
                       onClick={() => setCurrentStep(1)}
@@ -158,7 +191,8 @@ export default function UploadPage() {
                       Indietro
                     </Button>
                     <Button onClick={() => setCurrentStep(3)}>
-                      Continua (Demo)
+                      Continua con Valutazione
+                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
                 </div>
