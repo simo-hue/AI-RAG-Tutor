@@ -60,11 +60,12 @@ export class WhisperService {
 
       // For verbose_json format
       if (transcription && typeof transcription === 'object' && 'text' in transcription) {
+        const verboseTranscription = transcription as any;
         return {
-          text: transcription.text,
-          language: transcription.language,
-          duration: transcription.duration,
-          segments: transcription.segments?.map(segment => ({
+          text: verboseTranscription.text,
+          language: verboseTranscription.language,
+          duration: verboseTranscription.duration,
+          segments: verboseTranscription.segments?.map((segment: any) => ({
             start: segment.start,
             end: segment.end,
             text: segment.text,

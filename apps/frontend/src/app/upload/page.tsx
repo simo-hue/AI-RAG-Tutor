@@ -3,22 +3,28 @@
 import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { DocumentUpload } from '@/components/document/DocumentUpload';
+import { DocumentUpload, ProcessedDocument } from '@/components/document/DocumentUpload';
 import { AudioRecorder } from '@/components/audio/AudioRecorder';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
 import { FileText, ArrowRight, CheckCircle, Mic } from 'lucide-react';
 
 export default function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [processedDocuments, setProcessedDocuments] = useState<ProcessedDocument[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [transcription, setTranscription] = useState<string | null>(null);
 
   const handleFileUpload = (files: File[]) => {
     setUploadedFiles(prev => [...prev, ...files]);
-    // In a real implementation, you would upload the file to your backend
-    // and get a documentId back. For now, we'll generate a mock ID.
-    setDocumentId(`doc-${Date.now()}`);
+  };
+
+  const handleDocumentProcessed = (document: ProcessedDocument) => {
+    setProcessedDocuments(prev => [...prev, document]);
+    // Use the first processed document as the active documentId
+    if (!documentId) {
+      setDocumentId(document.documentId);
+    }
   };
 
   const handleTranscriptionComplete = (transcriptionText: string) => {
@@ -114,19 +120,20 @@ export default function UploadPage() {
               <CardContent>
                 <DocumentUpload
                   onFileUpload={handleFileUpload}
+                  onDocumentProcessed={handleDocumentProcessed}
                   maxFiles={3}
                   maxSize={50}
                 />
 
-                {uploadedFiles.length > 0 && (
+                {processedDocuments.length > 0 && (
                   <div className="mt-6 pt-6 border-t border-secondary-200">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-secondary-900">
-                          {uploadedFiles.length} documento{uploadedFiles.length > 1 ? 'i' : ''} caricato{uploadedFiles.length > 1 ? 'i' : ''}
+                          {processedDocuments.length} documento{processedDocuments.length > 1 ? 'i' : ''} processato{processedDocuments.length > 1 ? 'i' : ''}
                         </p>
                         <p className="text-xs text-secondary-500">
-                          Pronto per procedere alla registrazione audio
+                          {processedDocuments.reduce((sum, doc) => sum + (doc.chunkCount || 0), 0)} chunk pronti per l'analisi RAG
                         </p>
                       </div>
                       <Button

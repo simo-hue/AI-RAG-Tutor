@@ -59,7 +59,8 @@ export class EmbeddingService {
 
     } catch (error) {
       console.error('Error generating embeddings for batch:', error);
-      throw new Error(`Failed to generate embeddings: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to generate embeddings: ${errorMessage}`);
     }
   }
 
@@ -77,7 +78,8 @@ export class EmbeddingService {
 
     } catch (error) {
       console.error('Error generating single embedding:', error);
-      throw new Error(`Failed to generate embedding: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to generate embedding: ${errorMessage}`);
     }
   }
 

@@ -80,7 +80,8 @@ export class DocumentParser {
       };
 
     } catch (error) {
-      throw new Error(`Failed to parse document ${filename}: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to parse document ${filename}: ${errorMessage}`);
     }
   }
 
@@ -143,7 +144,8 @@ export class DocumentParser {
 
       return { isValid: true };
     } catch (error) {
-      return { isValid: false, error: `Cannot access file: ${error.message}` };
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return { isValid: false, error: `Cannot access file: ${errorMessage}` };
     }
   }
 }

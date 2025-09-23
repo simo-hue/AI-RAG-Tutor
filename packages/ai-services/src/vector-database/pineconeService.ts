@@ -9,6 +9,7 @@ export class PineconeVectorDB implements VectorDBInterface {
   constructor(private config: VectorDBConfig) {
     this.client = new Pinecone({
       apiKey: config.apiKey,
+      environment: config.environment || 'us-west1-gcp-free',
     });
   }
 
@@ -16,7 +17,7 @@ export class PineconeVectorDB implements VectorDBInterface {
     try {
       // Verifica se l'indice esiste
       const indexList = await this.client.listIndexes();
-      const indexExists = indexList.indexes?.some(idx => idx.name === this.config.indexName);
+      const indexExists = (indexList as any)?.some((idx: any) => idx.name === this.config.indexName);
 
       if (!indexExists) {
         throw new Error(`Index '${this.config.indexName}' does not exist. Create it first.`);
@@ -48,12 +49,6 @@ export class PineconeVectorDB implements VectorDBInterface {
         name,
         dimension: dimensions,
         metric: 'cosine',
-        spec: {
-          serverless: {
-            cloud: 'aws',
-            region: 'us-east-1'
-          }
-        },
         waitUntilReady: true,
       });
 
@@ -77,7 +72,7 @@ export class PineconeVectorDB implements VectorDBInterface {
   async listIndexes(): Promise<string[]> {
     try {
       const response = await this.client.listIndexes();
-      return response.indexes?.map(idx => idx.name || '') || [];
+      return (response as any)?.map((idx: any) => idx.name || '') || [];
     } catch (error) {
       console.error('Failed to list indexes:', error);
       throw error;
@@ -287,7 +282,7 @@ export class PineconeVectorDB implements VectorDBInterface {
       while (!ready && attempts < maxAttempts) {
         try {
           const indexList = await this.client.listIndexes();
-          const indexInfo = indexList.indexes?.find(idx => idx.name === name);
+          const indexInfo = (indexList as any)?.find((idx: any) => idx.name === name);
           ready = indexInfo?.status?.ready || false;
 
           if (!ready) {

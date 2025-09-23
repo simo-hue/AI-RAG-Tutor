@@ -92,7 +92,8 @@ export class EvaluationService {
 
     } catch (error) {
       console.error('Error during evaluation:', error);
-      throw new Error(`Evaluation failed: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Evaluation failed: ${errorMessage}`);
     }
   }
 
@@ -329,13 +330,13 @@ Fornisci un feedback dettagliato e costruttivo di almeno 5-6 frasi che aiuti a m
 
     // Calcola medie
     const averageScores = evaluations.reduce(
-      (acc, eval) => {
-        acc.accuracy += eval.criteria.accuracy;
-        acc.clarity += eval.criteria.clarity;
-        acc.completeness += eval.criteria.completeness;
-        acc.coherence += eval.criteria.coherence;
-        acc.fluency += eval.criteria.fluency;
-        acc.overall += eval.overallScore;
+      (acc, evaluation) => {
+        acc.accuracy += evaluation.criteria.accuracy;
+        acc.clarity += evaluation.criteria.clarity;
+        acc.completeness += evaluation.criteria.completeness;
+        acc.coherence += evaluation.criteria.coherence;
+        acc.fluency += evaluation.criteria.fluency;
+        acc.overall += evaluation.overallScore;
         return acc;
       },
       { accuracy: 0, clarity: 0, completeness: 0, coherence: 0, fluency: 0, overall: 0 }
@@ -347,7 +348,7 @@ Fornisci un feedback dettagliato e costruttivo di almeno 5-6 frasi che aiuti a m
     });
 
     // Analizza trends (solo se ci sono almeno 2 valutazioni)
-    let trends = { improving: [], declining: [], stable: [] };
+    let trends: { improving: string[], declining: string[], stable: string[] } = { improving: [], declining: [], stable: [] };
     if (evaluations.length >= 2) {
       const first = evaluations[0];
       const last = evaluations[evaluations.length - 1];

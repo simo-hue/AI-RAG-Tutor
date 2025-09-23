@@ -286,9 +286,10 @@ export class RAGService {
         await this.processDocument(filePath);
         successful.push(filePath);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         failed.push({
           filePath,
-          error: error.message || 'Unknown error',
+          error: errorMessage,
         });
       }
     }

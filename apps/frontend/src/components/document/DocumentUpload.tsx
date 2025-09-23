@@ -1,21 +1,34 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button, Card, Progress, Badge } from '@/components/ui';
 import { cn } from '@/utils/cn';
+import { documentService } from '@/services/documentService';
 
 interface UploadedFile {
   file: File;
   id: string;
-  status: 'uploading' | 'processing' | 'completed' | 'error';
+  documentId?: string;
+  status: 'uploading' | 'processing-chunks' | 'processing-embeddings' | 'completed' | 'error';
   progress: number;
   error?: string;
+  wordCount?: number;
+  chunkCount?: number;
+  processingStartTime?: number;
+}
+
+export interface ProcessedDocument {
+  file: File;
+  documentId: string;
+  wordCount?: number;
+  chunkCount?: number;
 }
 
 interface DocumentUploadProps {
   onFileUpload?: (files: File[]) => void;
+  onDocumentProcessed?: (document: ProcessedDocument) => void;
   maxFiles?: number;
   maxSize?: number; // in MB
   className?: string;
@@ -31,11 +44,27 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 export const DocumentUpload = ({
   onFileUpload,
+  onDocumentProcessed,
   maxFiles = 5,
   maxSize = 50,
   className
 }: DocumentUploadProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
+  // Update timer for processing files every second
+  useEffect(() => {
+    const hasProcessingFiles = uploadedFiles.some(
+      file => file.status === 'processing-embeddings' && file.processingStartTime
+    );
+
+    if (!hasProcessingFiles) return;
+
+    const interval = setInterval(() => {
+      setUploadedFiles(prev => [...prev]); // Force re-render to update timer
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [uploadedFiles]);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
     // Handle rejected files
@@ -56,47 +85,120 @@ export const DocumentUpload = ({
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
 
-    // Simulate upload process
+    // Start real upload process for each file
     newFiles.forEach((uploadedFile) => {
-      simulateUpload(uploadedFile.id);
+      uploadFile(uploadedFile.id);
     });
 
     onFileUpload?.(acceptedFiles);
   }, [onFileUpload]);
 
-  const simulateUpload = (fileId: string) => {
-    const interval = setInterval(() => {
-      setUploadedFiles(prev => prev.map(file => {
-        if (file.id === fileId) {
-          const newProgress = Math.min(file.progress + Math.random() * 30, 100);
+  const uploadFile = useCallback(async (fileId: string) => {
+    try {
+      // Get the uploaded file
+      const currentFiles = uploadedFiles;
+      const uploadedFile = currentFiles.find(f => f.id === fileId);
+      if (!uploadedFile) return;
 
-          if (newProgress >= 100) {
-            clearInterval(interval);
-            return {
-              ...file,
-              progress: 100,
-              status: 'processing'
-            };
-          }
-
-          return {
-            ...file,
-            progress: newProgress
-          };
-        }
-        return file;
-      }));
-    }, 500);
-
-    // Simulate processing after upload
-    setTimeout(() => {
+      // Update to uploading status
       setUploadedFiles(prev => prev.map(file =>
         file.id === fileId
-          ? { ...file, status: 'completed' }
+          ? { ...file, status: 'uploading', progress: 0 }
           : file
       ));
-    }, 3000);
-  };
+
+      // Upload the file with progress tracking
+      const result = await documentService.uploadDocument(
+        uploadedFile.file,
+        (progress) => {
+          setUploadedFiles(prev => prev.map(file =>
+            file.id === fileId
+              ? { ...file, progress: Math.min(progress, 95) } // Keep at 95% until processing
+              : file
+          ));
+        }
+      );
+
+      // File uploaded successfully, now chunking
+      setUploadedFiles(prev => prev.map(file =>
+        file.id === fileId
+          ? {
+              ...file,
+              status: 'processing-chunks',
+              progress: 95,
+              documentId: result.document.id
+            }
+          : file
+      ));
+
+      // Simulate chunking phase (it happens immediately but we show it)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Now processing embeddings
+      const processingStartTime = Date.now();
+      setUploadedFiles(prev => prev.map(file =>
+        file.id === fileId
+          ? {
+              ...file,
+              status: 'processing-embeddings',
+              progress: 98,
+              processingStartTime
+            }
+          : file
+      ));
+
+      // Start timer for embedding processing
+      const timer = setInterval(() => {
+        setUploadedFiles(prev => prev.map(file => {
+          if (file.id === fileId && file.processingStartTime) {
+            const elapsed = (Date.now() - file.processingStartTime) / 1000;
+            return { ...file, processingStartTime: file.processingStartTime };
+          }
+          return file;
+        }));
+      }, 1000);
+
+      // Auto-process the document (chunking and embedding)
+      await documentService.processDocument(result.document.id);
+
+      clearInterval(timer);
+
+      // Processing completed
+      const processedDocument: ProcessedDocument = {
+        file: uploadedFile.file,
+        documentId: result.document.id,
+        wordCount: result.document.wordCount,
+        chunkCount: result.document.chunkCount
+      };
+
+      setUploadedFiles(prev => prev.map(file =>
+        file.id === fileId
+          ? {
+              ...file,
+              status: 'completed',
+              progress: 100,
+              wordCount: result.document.wordCount,
+              chunkCount: result.document.chunkCount
+            }
+          : file
+      ));
+
+      // Notify parent component
+      onDocumentProcessed?.(processedDocument);
+
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      setUploadedFiles(prev => prev.map(file =>
+        file.id === fileId
+          ? {
+              ...file,
+              status: 'error',
+              error: error.message || 'Upload failed'
+            }
+          : file
+      ));
+    }
+  }, [uploadedFiles]);
 
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
@@ -127,8 +229,9 @@ export const DocumentUpload = ({
 
   const getStatusColor = (status: UploadedFile['status']) => {
     switch (status) {
-      case 'uploading': return 'warning';
-      case 'processing': return 'info';
+      case 'uploading': return 'info';
+      case 'processing-chunks': return 'warning';
+      case 'processing-embeddings': return 'warning';
       case 'completed': return 'success';
       case 'error': return 'error';
       default: return 'default';
@@ -137,18 +240,20 @@ export const DocumentUpload = ({
 
   const getStatusText = (status: UploadedFile['status']) => {
     switch (status) {
-      case 'uploading': return 'Caricamento in corso...';
-      case 'processing': return 'Analisi del contenuto...';
+      case 'uploading': return 'Caricamento file...';
+      case 'processing-chunks': return 'Analisi contenuto...';
+      case 'processing-embeddings': return 'Generazione embeddings...';
       case 'completed': return 'Pronto per l\'analisi';
       case 'error': return 'Errore durante il caricamento';
       default: return 'In attesa';
     }
   };
 
-  const getDetailedStatusDescription = (status: UploadedFile['status']) => {
+  const getDetailedStatusDescription = (status: UploadedFile['status'], processingTime?: number) => {
     switch (status) {
-      case 'uploading': return 'Trasferimento del file in corso';
-      case 'processing': return 'Estrazione e indicizzazione del testo per l\'analisi RAG';
+      case 'uploading': return 'Trasferimento del file al server in corso...';
+      case 'processing-chunks': return 'Estrazione e suddivisione del testo in chunk per il sistema RAG...';
+      case 'processing-embeddings': return `Generazione vector embeddings con Ollama${processingTime ? ` - ${Math.round(processingTime)}s trascorsi` : ''} (può richiedere 20-30 secondi)`;
       case 'completed': return 'Il documento è stato processato ed è pronto per essere utilizzato come riferimento';
       case 'error': return 'Si è verificato un problema durante l\'elaborazione del file';
       default: return '';
@@ -253,11 +358,17 @@ export const DocumentUpload = ({
                       )}
                     </div>
 
-                    {(uploadedFile.status === 'uploading' || uploadedFile.status === 'processing') && (
+                    {(uploadedFile.status === 'uploading' ||
+                      uploadedFile.status === 'processing-chunks' ||
+                      uploadedFile.status === 'processing-embeddings') && (
                       <Progress
                         value={uploadedFile.progress}
                         size="sm"
-                        color={uploadedFile.status === 'processing' ? 'primary' : 'warning'}
+                        color={
+                          uploadedFile.status === 'uploading' ? 'primary' :
+                          uploadedFile.status === 'processing-chunks' ? 'warning' :
+                          uploadedFile.status === 'processing-embeddings' ? 'warning' : 'primary'
+                        }
                       />
                     )}
 
@@ -268,7 +379,12 @@ export const DocumentUpload = ({
                     {/* Detailed status description */}
                     {uploadedFile.status !== 'error' && (
                       <p className="text-xs text-secondary-500 mt-1 leading-relaxed">
-                        {getDetailedStatusDescription(uploadedFile.status)}
+                        {getDetailedStatusDescription(
+                          uploadedFile.status,
+                          uploadedFile.processingStartTime
+                            ? (Date.now() - uploadedFile.processingStartTime) / 1000
+                            : undefined
+                        )}
                       </p>
                     )}
                   </div>

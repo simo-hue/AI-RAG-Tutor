@@ -1,6 +1,4 @@
-// Transcription services
-export { WhisperService } from './transcription';
-export type { TranscriptionOptions, TranscriptionResult } from './transcription';
+// Note: Transcription services are now in @ai-speech-evaluator/audio-services package
 
 // Document processing
 export { DocumentParser, TextChunker, EmbeddingService } from './document-processing';
@@ -8,9 +6,7 @@ export type {
   ParsedDocument,
   DocumentChunk,
   ChunkingOptions,
-  EmbeddingOptions,
-  VectorEmbedding,
-  SupportedFileType
+  EmbeddingOptions
 } from './document-processing';
 
 // Vector database
@@ -19,8 +15,7 @@ export type {
   VectorDBConfig,
   VectorRecord,
   SearchResult,
-  VectorDBInterface,
-  QueryOptions
+  VectorDBInterface
 } from './vector-database';
 
 // RAG service

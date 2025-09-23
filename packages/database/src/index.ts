@@ -1,2 +1,2 @@
 // Database exports
-export * from '../prisma/schema.prisma';
+export * from '@prisma/client';
