@@ -3,6 +3,20 @@ import fs from 'fs/promises';
 import path from 'path';
 import { transcriptionConfig } from '../config/ragConfig';
 import { logger } from '../utils/logger';
+import { safeCleanupFile } from '../utils/fileCleanup';
+
+interface WhisperSegment {
+  id: number;
+  seek: number;
+  start: number;
+  end: number;
+  text: string;
+  tokens: number[];
+  temperature: number;
+  avg_logprob: number;
+  compression_ratio: number;
+  no_speech_prob: number;
+}
 
 export class WhisperService {
   private static instance: WhisperService | null = null;
@@ -69,7 +83,7 @@ export class WhisperService {
     format?: 'text' | 'json' | 'srt';
   }): Promise<{
     text: string;
-    segments?: any[];
+    segments?: WhisperSegment[];
     language?: string;
     duration?: number;
   }> {
@@ -127,7 +141,7 @@ export class WhisperService {
     format: string;
   }): Promise<{
     text: string;
-    segments?: any[];
+    segments?: WhisperSegment[];
     language?: string;
     duration?: number;
   }> {
@@ -147,7 +161,7 @@ export class WhisperService {
     format: string;
   }): Promise<{
     text: string;
-    segments?: any[];
+    segments?: WhisperSegment[];
     language?: string;
     duration?: number;
   }> {
@@ -202,7 +216,7 @@ export class WhisperService {
             }
 
             // Clean up output file
-            await fs.unlink(outputFile).catch(() => {});
+            await safeCleanupFile(outputFile);
           } catch (error) {
             reject(new Error(`Failed to read transcription output: ${error.message}`));
           }
@@ -223,7 +237,7 @@ export class WhisperService {
     format: string;
   }): Promise<{
     text: string;
-    segments?: any[];
+    segments?: WhisperSegment[];
     language?: string;
     duration?: number;
   }> {

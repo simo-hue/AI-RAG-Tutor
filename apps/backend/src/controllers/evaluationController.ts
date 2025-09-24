@@ -157,7 +157,7 @@ export const evaluationController = {
         documentId
       );
 
-      const response: any = {
+      const response = {
         evaluation: evaluationResult.evaluation,
         contextUsed: evaluationResult.contextUsed,
         evaluationId: generateEvaluationId(),

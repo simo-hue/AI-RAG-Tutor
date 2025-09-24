@@ -1,5 +1,6 @@
 import winston from 'winston';
 import path from 'path';
+import { Request, Response, NextFunction } from 'express';
 
 // Configurazione formati per i log
 const logFormat = winston.format.combine(
@@ -100,7 +101,7 @@ export const securityLogger = logger.child({ service: 'security' });
 // Funzioni helper per logging strutturato
 export const loggers = {
   // Log per operazioni RAG
-  ragOperation: (operation: string, data: any, duration?: number) => {
+  ragOperation: (operation: string, data: Record<string, unknown>, duration?: number) => {
     ragLogger.info('RAG operation completed', {
       operation,
       duration: duration ? `${duration}ms` : undefined,
@@ -139,7 +140,7 @@ export const loggers = {
   },
 
   // Log per attività sospette
-  suspiciousActivity: (ip: string, userAgent: string, activity: string, details: any) => {
+  suspiciousActivity: (ip: string, userAgent: string, activity: string, details: Record<string, unknown>) => {
     securityLogger.warn('Suspicious activity detected', {
       ip,
       userAgent,
@@ -150,7 +151,7 @@ export const loggers = {
   },
 
   // Log per errori di sistema
-  systemError: (error: Error, context: any = {}) => {
+  systemError: (error: Error, context: Record<string, unknown> = {}) => {
     logger.error('System error occurred', {
       error: {
         name: error.name,
@@ -163,7 +164,7 @@ export const loggers = {
   },
 
   // Log per performance monitoring
-  performanceMetric: (operation: string, duration: number, metadata: any = {}) => {
+  performanceMetric: (operation: string, duration: number, metadata: Record<string, unknown> = {}) => {
     logger.info('Performance metric', {
       operation,
       duration: `${duration}ms`,
@@ -185,7 +186,7 @@ export const loggers = {
   },
 
   // Log per health checks
-  healthCheck: (service: string, status: 'healthy' | 'unhealthy', details: any = {}) => {
+  healthCheck: (service: string, status: 'healthy' | 'unhealthy', details: Record<string, unknown> = {}) => {
     const logLevel = status === 'healthy' ? 'info' : 'warn';
     logger.log(logLevel, 'Health check completed', {
       service,
@@ -197,7 +198,7 @@ export const loggers = {
 };
 
 // Middleware per logging delle richieste HTTP
-export const requestLogger = (req: any, res: any, next: any) => {
+export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
 
   // Log della richiesta in arrivo
@@ -210,7 +211,7 @@ export const requestLogger = (req: any, res: any, next: any) => {
 
   // Intercetta la risposta
   const originalSend = res.send;
-  res.send = function (data: any) {
+  res.send = function (data: unknown) {
     const duration = Date.now() - startTime;
 
     loggers.apiRequest(
@@ -245,7 +246,7 @@ process.on('uncaughtException', (error: Error) => {
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
   loggers.systemError(new Error(`Unhandled rejection: ${reason}`), {
     type: 'unhandledRejection',
     promise: promise.toString(),

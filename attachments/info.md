@@ -1,0 +1,1 @@
+Cartella dove devono venire caricati tutti i file che vengono allegati per l'analisi

@@ -122,7 +122,9 @@ export const AudioRecorder = ({
     try {
       await uploadAndTranscribe(documentId);
     } catch (error) {
-      console.error('Transcription failed:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Transcription failed:', error);
+      }
     }
   };
 

@@ -11,9 +11,11 @@ export const documentService = {
    * Upload a document file
    */
   async uploadDocument(file: File, onProgress?: (progress: number) => void): Promise<DocumentUploadResponse> {
+    console.log('DocumentService: Starting upload for file:', file.name);
     const formData = new FormData();
     formData.append('document', file);
 
+    console.log('DocumentService: Making API call to /documents/upload');
     const response = await api.post<APIResponse<DocumentUploadResponse>>('/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -26,6 +28,7 @@ export const documentService = {
       },
     });
 
+    console.log('DocumentService: Upload response:', response.data);
     return response.data.data!;
   },
 

@@ -67,11 +67,17 @@ export const DocumentUpload = ({
   }, [uploadedFiles]);
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('onDrop called with:', { acceptedFiles: acceptedFiles.length, rejectedFiles: rejectedFiles.length });
+    }
+
     // Handle rejected files
     if (rejectedFiles.length > 0) {
       rejectedFiles.forEach((rejected) => {
         const error = rejected.errors[0];
-        console.error('File rejected:', rejected.file.name, error.message);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('File rejected:', rejected.file.name, error.message);
+        }
       });
     }
 
@@ -83,45 +89,63 @@ export const DocumentUpload = ({
       progress: 0,
     }));
 
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Adding new files to state:', newFiles.map(f => ({ id: f.id, name: f.file.name })));
+    }
+    setUploadedFiles(prev => {
+      const updated = [...prev, ...newFiles];
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Updated uploadedFiles state:', updated.map(f => ({ id: f.id, name: f.file.name, status: f.status })));
+      }
+      return updated;
+    });
 
-    // Start real upload process for each file
-    newFiles.forEach((uploadedFile) => {
-      uploadFile(uploadedFile.id);
+    // Start real upload process for each file immediately with the file object
+    newFiles.forEach((newFile) => {
+      uploadFileWithData(newFile);
     });
 
     onFileUpload?.(acceptedFiles);
   }, [onFileUpload]);
 
-  const uploadFile = useCallback(async (fileId: string) => {
+  const uploadFileWithData = useCallback(async (uploadedFile: UploadedFile) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('uploadFileWithData called with file:', uploadedFile.file.name);
+    }
+
     try {
-      // Get the uploaded file
-      const currentFiles = uploadedFiles;
-      const uploadedFile = currentFiles.find(f => f.id === fileId);
-      if (!uploadedFile) return;
 
       // Update to uploading status
       setUploadedFiles(prev => prev.map(file =>
-        file.id === fileId
+        file.id === uploadedFile.id
           ? { ...file, status: 'uploading', progress: 0 }
           : file
       ));
 
       // Upload the file with progress tracking
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Starting upload for file:', uploadedFile.file.name);
+      }
       const result = await documentService.uploadDocument(
         uploadedFile.file,
         (progress) => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Upload progress:', progress);
+          }
           setUploadedFiles(prev => prev.map(file =>
-            file.id === fileId
+            file.id === uploadedFile.id
               ? { ...file, progress: Math.min(progress, 95) } // Keep at 95% until processing
               : file
           ));
         }
       );
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Upload result:', result);
+      }
 
       // File uploaded successfully, now chunking
       setUploadedFiles(prev => prev.map(file =>
-        file.id === fileId
+        file.id === uploadedFile.id
           ? {
               ...file,
               status: 'processing-chunks',
@@ -137,7 +161,7 @@ export const DocumentUpload = ({
       // Now processing embeddings
       const processingStartTime = Date.now();
       setUploadedFiles(prev => prev.map(file =>
-        file.id === fileId
+        file.id === uploadedFile.id
           ? {
               ...file,
               status: 'processing-embeddings',
@@ -150,7 +174,7 @@ export const DocumentUpload = ({
       // Start timer for embedding processing
       const timer = setInterval(() => {
         setUploadedFiles(prev => prev.map(file => {
-          if (file.id === fileId && file.processingStartTime) {
+          if (file.id === uploadedFile.id && file.processingStartTime) {
             const elapsed = (Date.now() - file.processingStartTime) / 1000;
             return { ...file, processingStartTime: file.processingStartTime };
           }
@@ -172,7 +196,7 @@ export const DocumentUpload = ({
       };
 
       setUploadedFiles(prev => prev.map(file =>
-        file.id === fileId
+        file.id === uploadedFile.id
           ? {
               ...file,
               status: 'completed',
@@ -187,18 +211,84 @@ export const DocumentUpload = ({
       onDocumentProcessed?.(processedDocument);
 
     } catch (error: any) {
-      console.error('Upload failed:', error);
+      // Always log errors but less verbosely in production
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Upload failed:', error);
+        console.error('Error details:', {
+          message: error.message,
+          response: error.response,
+          status: error.response?.status,
+          data: error.response?.data
+        });
+      } else {
+        console.error('Upload failed:', error.message);
+      }
+
+      // Check if it's an Ollama-related error
+      const isOllamaError = error.message?.includes('Ollama') ||
+                           error.response?.status === 503 ||
+                           error.message?.includes('service is not available');
+
+      if (isOllamaError) {
+        // Try to start Ollama automatically
+        setUploadedFiles(prev => prev.map(file =>
+          file.id === uploadedFile.id
+            ? {
+                ...file,
+                status: 'processing-chunks',
+                progress: 90,
+                error: 'Avvio Ollama in corso...'
+              }
+            : file
+        ));
+
+        try {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Attempting to start Ollama...');
+          }
+          const startResponse = await fetch('/api/health/ollama/start', {
+            method: 'POST'
+          });
+
+          if (startResponse.ok) {
+            // Retry the upload after a short delay
+            setTimeout(() => {
+              setUploadedFiles(prev => prev.map(file =>
+                file.id === uploadedFile.id
+                  ? {
+                      ...file,
+                      status: 'uploading',
+                      progress: 0,
+                      error: undefined
+                    }
+                  : file
+              ));
+
+              // Retry the upload
+              uploadFileWithData(uploadedFile);
+            }, 3000);
+            return;
+          }
+        } catch (startError) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Failed to start Ollama:', startError);
+          }
+        }
+      }
+
       setUploadedFiles(prev => prev.map(file =>
-        file.id === fileId
+        file.id === uploadedFile.id
           ? {
               ...file,
               status: 'error',
-              error: error.message || 'Upload failed'
+              error: isOllamaError
+                ? 'Servizio AI non disponibile. Assicurati che Ollama sia installato e funzionante.'
+                : error.message || 'Upload failed'
             }
           : file
       ));
     }
-  }, [uploadedFiles]);
+  }, []);
 
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
@@ -397,18 +487,12 @@ export const DocumentUpload = ({
 
       {/* Action Buttons */}
       {uploadedFiles.length > 0 && (
-        <div className="flex justify-between items-center">
+        <div className="flex justify-start">
           <Button
             variant="outline"
             onClick={() => setUploadedFiles([])}
           >
             Rimuovi Tutti
-          </Button>
-
-          <Button
-            disabled={uploadedFiles.some(f => f.status !== 'completed')}
-          >
-            Procedi al Passaggio Successivo
           </Button>
         </div>
       )}

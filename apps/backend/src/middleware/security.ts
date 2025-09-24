@@ -1,6 +1,7 @@
 import helmet from 'helmet';
 import compression from 'compression';
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 
 // Configurazione sicurezza con Helmet
 export const securityMiddleware = helmet({
@@ -47,8 +48,17 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 
   const origin = req.headers.origin;
-  if (!origin || allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin && process.env.NODE_ENV === 'development') {
+    // Allow no-origin requests only in development (e.g., Postman, curl)
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  } else if (!allowedOrigins.includes(origin || '')) {
+    // Reject unauthorized origins
+    return res.status(403).json({
+      success: false,
+      error: 'Origin not allowed by CORS policy'
+    });
   }
 
   res.setHeader(
@@ -182,7 +192,7 @@ export const suspiciousActivityLogger = (req: Request, res: Response, next: Next
 
   for (const pattern of suspiciousIndicators) {
     if (pattern.test(requestData)) {
-      console.warn('Suspicious activity detected:', {
+      logger.warn('Suspicious activity detected', {
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         url: req.url,

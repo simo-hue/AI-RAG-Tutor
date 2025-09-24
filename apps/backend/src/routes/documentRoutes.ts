@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { documentController } from '../controllers/documentController';
@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedTypes = [
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -88,7 +88,7 @@ router.get('/:id/status',
   documentController.getProcessingStatus
 );
 
-router.post('/:id/process',
+router.post('/:documentId/process',
   generalLimiter,
   validateDocumentId,
   documentController.processDocument

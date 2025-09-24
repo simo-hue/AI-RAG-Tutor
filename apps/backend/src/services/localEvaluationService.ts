@@ -2,6 +2,7 @@ import { OllamaService } from './ollamaService';
 import { evaluationConfig } from '../config/ragConfig';
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
+import { DocumentChunk } from '@ai-speech-evaluator/shared';
 
 export interface EvaluationCriteria {
   accuracy: number;
@@ -65,7 +66,7 @@ export class LocalEvaluationService {
     relevantChunks: Array<{
       content: string;
       score: number;
-      metadata: any;
+      metadata: DocumentChunk['metadata'];
     }>,
     documentId: string
   ): Promise<EvaluationResult> {
@@ -117,7 +118,7 @@ export class LocalEvaluationService {
     relevantChunks: Array<{
       content: string;
       score: number;
-      metadata: any;
+      metadata: DocumentChunk['metadata'];
     }>,
     focusArea?: keyof EvaluationCriteria
   ): Promise<string> {

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import multer from 'multer';
 import path from 'path';
 import { audioController } from '../controllers/audioController';
@@ -28,7 +28,7 @@ const audioStorage = multer.diskStorage({
   },
 });
 
-const audioFileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const audioFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedTypes = [
     'audio/wav',
     'audio/mp3',

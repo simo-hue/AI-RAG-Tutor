@@ -74,7 +74,11 @@ export class OllamaService {
     try {
       const startTime = Date.now();
 
-      const messages: any[] = [];
+      interface ChatMessage {
+        role: 'system' | 'user' | 'assistant';
+        content: string;
+      }
+      const messages: ChatMessage[] = [];
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt });
       }
@@ -172,7 +176,7 @@ export class OllamaService {
     }
   }
 
-  async healthCheck(): Promise<{ status: string; models: any; version?: string }> {
+  async healthCheck(): Promise<{ status: string; models: string[]; version?: string }> {
     try {
       const [models, version] = await Promise.allSettled([
         this.client.list(),

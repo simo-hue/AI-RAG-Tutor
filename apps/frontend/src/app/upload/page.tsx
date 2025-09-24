@@ -5,8 +5,11 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { DocumentUpload, ProcessedDocument } from '@/components/document/DocumentUpload';
 import { AudioRecorder } from '@/components/audio/AudioRecorder';
+import { EvaluationProcessor } from '@/components/evaluation/EvaluationProcessor';
+import { EvaluationResults } from '@/components/evaluation/EvaluationResults';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
-import { FileText, ArrowRight, CheckCircle, Mic } from 'lucide-react';
+import { FileText, ArrowRight, CheckCircle, Mic, BarChart3 } from 'lucide-react';
+import { EvaluationResult } from '@/services/evaluationService';
 
 export default function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -14,6 +17,9 @@ export default function UploadPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [transcription, setTranscription] = useState<string | null>(null);
+  const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
+  const [evaluationError, setEvaluationError] = useState<string | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
 
   const handleFileUpload = (files: File[]) => {
     setUploadedFiles(prev => [...prev, ...files]);
@@ -29,6 +35,35 @@ export default function UploadPage() {
 
   const handleTranscriptionComplete = (transcriptionText: string) => {
     setTranscription(transcriptionText);
+  };
+
+  const handleStartEvaluation = () => {
+    if (transcription && documentId) {
+      setIsEvaluating(true);
+      setEvaluationError(null);
+      setCurrentStep(3);
+    }
+  };
+
+  const handleEvaluationComplete = (result: EvaluationResult) => {
+    setEvaluationResult(result);
+    setIsEvaluating(false);
+  };
+
+  const handleEvaluationError = (error: string) => {
+    setEvaluationError(error);
+    setIsEvaluating(false);
+  };
+
+  const handleRestart = () => {
+    setCurrentStep(1);
+    setUploadedFiles([]);
+    setProcessedDocuments([]);
+    setDocumentId(null);
+    setTranscription(null);
+    setEvaluationResult(null);
+    setEvaluationError(null);
+    setIsEvaluating(false);
   };
 
   const steps = [
@@ -48,7 +83,7 @@ export default function UploadPage() {
       number: 3,
       title: 'Ottieni Feedback',
       description: 'Ricevi valutazione e suggerimenti dettagliati',
-      icon: CheckCircle,
+      icon: BarChart3,
     },
   ];
 
@@ -169,7 +204,9 @@ export default function UploadPage() {
               <CardContent>
                 <AudioRecorder
                   onRecordingComplete={(audioBlob, duration) => {
-                    console.log('Recording completed:', { audioBlob, duration });
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log('Recording completed:', { audioBlob, duration });
+                    }
                   }}
                   onTranscriptionComplete={handleTranscriptionComplete}
                   documentId={documentId || undefined}
@@ -189,51 +226,115 @@ export default function UploadPage() {
                   </div>
                 )}
 
-                <div className="pt-6 border-t border-secondary-200">
-                  <div className="flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentStep(1)}
-                    >
-                      Indietro
-                    </Button>
-                    <Button onClick={() => setCurrentStep(3)}>
-                      Continua con Valutazione
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                {transcription && (
+                  <div className="pt-6 border-t border-secondary-200">
+                    <div className="flex items-center justify-between">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentStep(1)}
+                      >
+                        Indietro
+                      </Button>
+                      <Button
+                        onClick={handleStartEvaluation}
+                        disabled={!transcription || !documentId}
+                      >
+                        Inizia Valutazione
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           )}
 
-          {/* Step 3: Results (Placeholder) */}
+          {/* Step 3: Evaluation */}
           {currentStep === 3 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Risultati e Feedback</CardTitle>
-                <p className="text-secondary-600">
-                  Valutazione e feedback dettagliato della tua presentazione
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-success-600" />
-                  </div>
-                  <p className="text-secondary-600">
-                    La funzionalità di valutazione e feedback sarà disponibile presto.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setCurrentStep(1)}
-                    className="mt-6"
-                  >
-                    Ricomincia
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Show processing when evaluation is running */}
+              {isEvaluating && transcription && documentId && (
+                <EvaluationProcessor
+                  transcription={transcription}
+                  documentId={documentId}
+                  onEvaluationComplete={handleEvaluationComplete}
+                  onError={handleEvaluationError}
+                />
+              )}
+
+              {/* Show results when evaluation is complete */}
+              {evaluationResult && !isEvaluating && (
+                <EvaluationResults
+                  evaluationResult={evaluationResult}
+                  onRestart={handleRestart}
+                />
+              )}
+
+              {/* Show error state */}
+              {evaluationError && !isEvaluating && (
+                <Card className="border-error-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <CheckCircle className="w-5 h-5 text-error-600" />
+                      <span>Errore durante la Valutazione</span>
+                    </CardTitle>
+                    <p className="text-secondary-600">
+                      Si è verificato un problema durante l'elaborazione
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-error-50 border border-error-200 rounded-lg">
+                        <p className="text-sm text-error-700">{evaluationError}</p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Button
+                          variant="outline"
+                          onClick={() => setCurrentStep(2)}
+                        >
+                          Torna alla Registrazione
+                        </Button>
+                        <Button onClick={handleStartEvaluation}>
+                          Riprova Valutazione
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Initial state - shouldn't normally be shown */}
+              {!isEvaluating && !evaluationResult && !evaluationError && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <BarChart3 className="w-5 h-5 text-primary-600" />
+                      <span>Pronto per la Valutazione</span>
+                    </CardTitle>
+                    <p className="text-secondary-600">
+                      Avvia la valutazione intelligente della tua presentazione
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8">
+                      <Button
+                        onClick={handleStartEvaluation}
+                        disabled={!transcription || !documentId}
+                        size="lg"
+                      >
+                        Avvia Valutazione AI
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                      {(!transcription || !documentId) && (
+                        <p className="text-sm text-secondary-500 mt-3">
+                          Completa i passaggi precedenti per continuare
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </div>
 

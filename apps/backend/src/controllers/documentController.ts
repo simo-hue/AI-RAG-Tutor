@@ -4,6 +4,7 @@ import { AppError } from '../middleware/errorHandler';
 import path from 'path';
 import fs from 'fs/promises';
 import { config } from '../config';
+import { cleanupMulterFiles, safeCleanupFile } from '../utils/fileCleanup';
 
 export const documentController = {
   async uploadDocument(req: Request, res: Response, next: NextFunction) {
@@ -21,7 +22,7 @@ export const documentController = {
 
       if (!allowedExtensions.includes(fileExtension)) {
         // Rimuovi file non valido
-        await fs.unlink(req.file.path).catch(() => {});
+        await safeCleanupFile(req.file.path);
         throw new AppError(
           `File type not supported. Allowed types: ${allowedExtensions.join(', ')}`,
           400
@@ -35,7 +36,7 @@ export const documentController = {
       // Valida il documento prima del processamento
       const validation = await documentService.validateFile(req.file.path);
       if (!validation.isValid) {
-        await fs.unlink(req.file.path).catch(() => {});
+        await safeCleanupFile(req.file.path);
         throw new AppError(`Invalid document: ${validation.error}`, 400);
       }
 
@@ -46,24 +47,28 @@ export const documentController = {
       res.status(201).json({
         success: true,
         data: {
-          documentId: result.documentId,
-          filename: result.filename,
-          title: title || path.parse(req.file.originalname).name,
-          description: description || null,
-          wordCount: result.wordCount,
-          chunkCount: result.chunkCount,
-          processingTime: result.processingTime,
-          uploadedAt: new Date(),
-          fileInfo: validation.fileInfo,
+          document: {
+            id: result.documentId,
+            name: req.file.originalname,
+            content: '', // Content not needed for upload response
+            type: getDocumentType(path.extname(req.file.originalname).toLowerCase()),
+            uploadedAt: new Date(),
+            wordCount: result.wordCount,
+            chunkCount: result.chunkCount,
+          },
+          uploadProgress: {
+            documentId: result.documentId,
+            stage: 'complete' as const,
+            progress: 100,
+            message: 'Document processed successfully'
+          }
         },
         message: 'Document uploaded and processed successfully',
       });
 
     } catch (error) {
       // Cleanup file in caso di errore
-      if (req.file?.path) {
-        await fs.unlink(req.file.path).catch(() => {});
-      }
+      await cleanupMulterFiles(req.file);
       next(error);
     }
   },
@@ -177,9 +182,7 @@ export const documentController = {
       });
 
     } catch (error) {
-      if (req.file?.path) {
-        await fs.unlink(req.file.path).catch(() => {});
-      }
+      await cleanupMulterFiles(req.file);
       next(error);
     }
   },
@@ -201,9 +204,7 @@ export const documentController = {
       const result = await documentService.batchProcessDocuments(documents);
 
       // Cleanup all uploaded files
-      await Promise.all(
-        req.files.map(file => fs.unlink(file.path).catch(() => {}))
-      );
+      await cleanupMulterFiles(req.files as Express.Multer.File[]);
 
       res.status(201).json({
         success: true,
@@ -219,11 +220,7 @@ export const documentController = {
 
     } catch (error) {
       // Cleanup all files in caso di errore
-      if (req.files && Array.isArray(req.files)) {
-        await Promise.all(
-          req.files.map(file => fs.unlink(file.path).catch(() => {}))
-        );
-      }
+      await cleanupMulterFiles(req.files as Express.Multer.File[]);
       next(error);
     }
   },
@@ -291,9 +288,7 @@ export const documentController = {
       });
 
     } catch (error) {
-      if (req.file?.path) {
-        await fs.unlink(req.file.path).catch(() => {});
-      }
+      await cleanupMulterFiles(req.file);
       next(error);
     }
   },
@@ -386,13 +381,13 @@ export const documentController = {
 
   async processDocument(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { documentId } = req.params;
 
       // Placeholder implementation - this would trigger reprocessing
       res.json({
         success: true,
         data: {
-          documentId: id,
+          documentId: documentId,
           status: 'processing',
           message: 'Document processing started'
         },
@@ -450,4 +445,17 @@ function generateDocumentId(): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substr(2, 9);
   return `doc_${timestamp}_${random}`;
+}
+
+function getDocumentType(extension: string): 'pdf' | 'docx' | 'txt' {
+  switch (extension) {
+    case '.pdf':
+      return 'pdf';
+    case '.docx':
+      return 'docx';
+    case '.txt':
+      return 'txt';
+    default:
+      return 'txt'; // default fallback
+  }
 }
