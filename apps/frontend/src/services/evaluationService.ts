@@ -23,7 +23,7 @@ export interface EvaluationResult {
         chunksUsed: number;
         totalContextLength: number;
       };
-      processingTime: string;
+      processingTime: string | number;
       evaluatedAt: string;
     };
   };
@@ -76,6 +76,7 @@ class EvaluationService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
       },
       body: JSON.stringify({
         transcription,
@@ -109,6 +110,7 @@ class EvaluationService {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
       },
     });
 
@@ -137,6 +139,7 @@ class EvaluationService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
       },
       body: JSON.stringify({
         transcription,

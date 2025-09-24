@@ -64,14 +64,26 @@ export const EvaluationResults = ({
     return 'Da migliorare';
   };
 
-  const formatProcessingTime = (time: string) => {
-    const match = time.match(/(\d+)ms/);
-    if (match) {
-      const ms = parseInt(match[1]);
-      if (ms < 1000) return `${ms}ms`;
-      return `${(ms / 1000).toFixed(1)}s`;
+  const formatProcessingTime = (time: string | number) => {
+    // Se è un numero, assumiamo che sia in millisecondi
+    if (typeof time === 'number') {
+      if (time < 1000) return `${time}ms`;
+      return `${(time / 1000).toFixed(1)}s`;
     }
-    return time;
+
+    // Se è una stringa, proviamo a fare il parsing
+    if (typeof time === 'string') {
+      const match = time.match(/(\d+)ms/);
+      if (match) {
+        const ms = parseInt(match[1]);
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(1)}s`;
+      }
+      return time;
+    }
+
+    // Fallback per tipi non supportati
+    return String(time);
   };
 
   return (

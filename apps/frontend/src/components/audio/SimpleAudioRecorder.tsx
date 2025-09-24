@@ -12,9 +12,11 @@ import {
   Volume2,
   Clock,
   CheckCircle2,
+  Settings,
+  ChevronDown,
 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Badge, Progress } from '@/components/ui';
-import { useSimpleAudioRecorder } from '@/hooks/useSimpleAudioRecorder';
+import { useSimpleAudioRecorder, AudioDevice } from '@/hooks/useSimpleAudioRecorder';
 import { cn } from '@/utils/cn';
 
 interface SimpleAudioRecorderProps {
@@ -42,11 +44,15 @@ export const SimpleAudioRecorder = ({
     isTranscribing,
     isSupported,
     confidence,
+    availableDevices,
+    selectedDeviceId,
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
     clearRecording,
+    selectAudioDevice,
+    enumerateAudioDevices,
   } = useSimpleAudioRecorder();
 
   // Formato durata
@@ -153,6 +159,54 @@ export const SimpleAudioRecorder = ({
             <Progress value={progressPercentage} className="h-2" />
           </div>
 
+          {/* Microphone Selection */}
+          {availableDevices.length > 1 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-secondary-700">
+                  Microfono
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={enumerateAudioDevices}
+                  className="text-xs"
+                  disabled={isRecording}
+                >
+                  <Settings className="w-3 h-3 mr-1" />
+                  Aggiorna
+                </Button>
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedDeviceId}
+                  onChange={(e) => selectAudioDevice(e.target.value)}
+                  className="w-full p-2 text-sm border border-secondary-300 rounded-lg bg-white appearance-none cursor-pointer hover:border-primary-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                  disabled={isRecording}
+                >
+                  {availableDevices.map((device) => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-400 pointer-events-none" />
+              </div>
+              {isRecording && (
+                <p className="text-xs text-warning-600">
+                  Ferma la registrazione per cambiare microfono
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Current Device Display */}
+          {availableDevices.length > 0 && (
+            <div className="text-xs text-secondary-500 text-center">
+              Microfono attivo: {availableDevices.find(d => d.deviceId === selectedDeviceId)?.label || 'Microfono predefinito'}
+            </div>
+          )}
+
           {/* Controls */}
           <div className="flex items-center justify-center space-x-3">
             {!isRecording ? (
@@ -207,11 +261,30 @@ export const SimpleAudioRecorder = ({
 
           {/* Error Display */}
           {error && (
-            <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-error-600 flex-shrink-0" />
-              <p className="text-sm text-error-700">
-                {typeof error === 'string' ? error : 'Si è verificato un errore con l\'audio'}
-              </p>
+            <div className="p-4 bg-error-50 border border-error-200 rounded-lg">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-error-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-error-700 font-medium mb-2">
+                    {typeof error === 'string' ? error : 'Si è verificato un errore con l\'audio'}
+                  </p>
+                  {typeof error === 'string' && error.includes('permessi') && (
+                    <div className="text-xs text-error-600">
+                      <p className="mb-2">Per abilitare il microfono:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Clicca sull'icona del microfono nella barra degli indirizzi</li>
+                        <li>Seleziona "Consenti sempre"</li>
+                        <li>Ricarica la pagina se necessario</li>
+                      </ol>
+                    </div>
+                  )}
+                  {typeof error === 'string' && error.includes('HTTPS') && (
+                    <div className="text-xs text-error-600">
+                      <p>Il sito deve essere servito tramite HTTPS per accedere al microfono.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 

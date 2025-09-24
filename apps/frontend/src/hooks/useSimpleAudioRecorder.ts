@@ -2,6 +2,11 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
+export interface AudioDevice {
+  deviceId: string;
+  label: string;
+}
+
 export interface SimpleRecordingState {
   isRecording: boolean;
   isPaused: boolean;
@@ -12,6 +17,8 @@ export interface SimpleRecordingState {
   isTranscribing: boolean;
   isSupported: boolean;
   confidence: number;
+  availableDevices: AudioDevice[];
+  selectedDeviceId: string;
 }
 
 export const useSimpleAudioRecorder = () => {
@@ -25,6 +32,8 @@ export const useSimpleAudioRecorder = () => {
     isTranscribing: false,
     isSupported: false,
     confidence: 0,
+    availableDevices: [],
+    selectedDeviceId: '',
   });
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -42,12 +51,104 @@ export const useSimpleAudioRecorder = () => {
     return 'Si è verificato un errore sconosciuto';
   }, []);
 
+  // Enumerazione dispositivi audio
+  const enumerateAudioDevices = useCallback(async () => {
+    try {
+      // Prima tenta senza richiedere permessi per vedere se sono già stati concessi
+      let devices;
+      try {
+        devices = await navigator.mediaDevices.enumerateDevices();
+      } catch {
+        // Se non riesce, richiedi permessi
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        devices = await navigator.mediaDevices.enumerateDevices();
+      }
+
+      const audioInputs = devices
+        .filter(device => device.kind === 'audioinput' && device.deviceId !== 'default')
+        .map(device => ({
+          deviceId: device.deviceId,
+          label: device.label || `Microfono ${device.deviceId.slice(0, 5)}`
+        }));
+
+      console.log('Dispositivi enumerati:', audioInputs);
+
+      // Verifica se il dispositivo selezionato è ancora disponibile
+      const currentDeviceId = state.selectedDeviceId;
+      const isCurrentDeviceAvailable = audioInputs.some(device => device.deviceId === currentDeviceId);
+
+      // Se non c'è dispositivo selezionato, seleziona il primo disponibile
+      const newSelectedDeviceId = isCurrentDeviceAvailable
+        ? currentDeviceId
+        : audioInputs[0]?.deviceId || '';
+
+      setState(prev => ({
+        ...prev,
+        availableDevices: audioInputs,
+        selectedDeviceId: newSelectedDeviceId,
+        // Non mostrare errore durante l'inizializzazione o refresh
+        error: currentDeviceId && !isCurrentDeviceAvailable && audioInputs.length > 0
+          ? 'Il dispositivo audio selezionato non è più disponibile. Selezionato automaticamente un altro dispositivo.'
+          : null
+      }));
+
+    } catch (error) {
+      console.warn('Errore durante l\'enumerazione dispositivi:', error);
+      setState(prev => ({
+        ...prev,
+        error: getErrorMessage(error),
+        availableDevices: [],
+        selectedDeviceId: ''
+      }));
+    }
+  }, [getErrorMessage, state.selectedDeviceId]);
+
+  // Selezione dispositivo audio
+  const selectAudioDevice = useCallback((deviceId: string) => {
+    setState(prev => ({ ...prev, selectedDeviceId: deviceId, error: null }));
+  }, []);
+
+  // Validazione dispositivo selezionato
+  const validateSelectedDevice = useCallback(() => {
+    if (state.selectedDeviceId && state.availableDevices.length > 0) {
+      const deviceExists = state.availableDevices.some(device => device.deviceId === state.selectedDeviceId);
+      if (!deviceExists) {
+        // Reset al primo dispositivo disponibile
+        const firstDevice = state.availableDevices[0];
+        if (firstDevice) {
+          setState(prev => ({
+            ...prev,
+            selectedDeviceId: firstDevice.deviceId,
+            error: 'Il dispositivo selezionato non è più disponibile. Selezionato automaticamente un altro dispositivo.'
+          }));
+        }
+      }
+    }
+  }, [state.selectedDeviceId, state.availableDevices]);
+
   // Inizializzazione
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const isSupported = !!SpeechRecognition && !!navigator.mediaDevices && !!window.MediaRecorder;
 
     setState(prev => ({ ...prev, isSupported }));
+
+    // Enumera i dispositivi audio se supportato
+    if (isSupported) {
+      enumerateAudioDevices();
+
+      // Listener per cambiamenti nei dispositivi
+      const handleDeviceChange = () => {
+        enumerateAudioDevices();
+      };
+
+      navigator.mediaDevices?.addEventListener('devicechange', handleDeviceChange);
+
+      // Cleanup del listener
+      return () => {
+        navigator.mediaDevices?.removeEventListener('devicechange', handleDeviceChange);
+      };
+    }
 
     if (isSupported && SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -126,8 +227,13 @@ export const useSimpleAudioRecorder = () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (isSupported) {
+        navigator.mediaDevices?.removeEventListener('devicechange', () => {
+          enumerateAudioDevices();
+        });
+      }
     };
-  }, [getErrorMessage]);
+  }, [getErrorMessage, enumerateAudioDevices]);
 
   // Avvia registrazione
   const startRecording = useCallback(async () => {
@@ -143,16 +249,180 @@ export const useSimpleAudioRecorder = () => {
       setState(prev => ({ ...prev, error: null }));
       finalTranscriptRef.current = '';
 
-      // Ottieni accesso al microfono
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 44100,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+      console.log('=== AVVIO REGISTRAZIONE AUDIO ===');
+      console.log('Tentativo di ottenere accesso audio con metodo ultra-semplificato');
+
+      // PRIMA: Diagnostica completa dei dispositivi disponibili
+      console.log('🔍 DIAGNOSTICA DISPOSITIVI AUDIO:');
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        console.log('Tutti i dispositivi trovati:', devices);
+
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
+        console.log(`📱 Dispositivi audio input trovati: ${audioInputs.length}`);
+
+        audioInputs.forEach((device, index) => {
+          console.log(`  ${index + 1}. ${device.label || 'Dispositivo sconosciuto'} (ID: ${device.deviceId})`);
+        });
+
+        if (audioInputs.length === 0) {
+          console.error('❌ PROBLEMA CRITICO: Nessun dispositivo audio input trovato dal sistema!');
+          throw new Error(`NESSUN MICROFONO RILEVATO dal sistema.
+
+🔧 DIAGNOSI: Il sistema operativo non vede nessun dispositivo di input audio.
+
+📋 SOLUZIONI IMMEDIATE:
+1. Controlla che un microfono sia fisicamente collegato
+2. Su Mac: Sistema > Preferenze > Suono > Input
+3. Su Windows: Impostazioni > Sistema > Audio > Input
+4. Verifica che il microfono sia abilitato nelle impostazioni del sistema
+5. Prova a scollegare e ricollegare il microfono
+6. Riavvia il browser completamente
+7. Se usi cuffie USB/Bluetooth, verifica che siano connesse correttamente
+
+🚨 IMPORTANTE: Il browser può accedere solo ai microfoni che il sistema operativo riesce a vedere.`);
         }
-      });
+
+        console.log('✅ Dispositivi audio trovati, procedendo con la richiesta...');
+
+      } catch (enumError) {
+        console.warn('⚠️ Impossibile enumerare dispositivi (questo può essere normale prima dei permessi):', enumError);
+      }
+
+      let stream: MediaStream;
+
+      // METODO ULTRA-SEMPLIFICATO: Usa SOLO la sintassi più basilare possibile
+      try {
+        console.log('🎤 Tentando getUserMedia con { audio: true } - metodo più basilare possibile');
+
+        // Usa la sintassi più semplice possibile senza nessun constraint
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        console.log('✅ SUCCESS: Stream audio ottenuto con successo!');
+        console.log('Stream details:', {
+          id: stream.id,
+          active: stream.active,
+          audioTracks: stream.getAudioTracks().length
+        });
+
+        if (stream.getAudioTracks().length > 0) {
+          const track = stream.getAudioTracks()[0];
+          console.log('Audio track details:', {
+            label: track.label,
+            enabled: track.enabled,
+            kind: track.kind,
+            readyState: track.readyState,
+            settings: track.getSettings ? track.getSettings() : 'getSettings not supported'
+          });
+        }
+
+      } catch (error: any) {
+        console.error('❌ ERRORE durante getUserMedia:', error);
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+
+        // Prova anche con la sintassi ancora più antica
+        try {
+          console.log('Tentando con navigator.getUserMedia (metodo legacy)...');
+
+          // @ts-ignore - Usa l'API legacy se disponibile
+          const legacyGetUserMedia = navigator.getUserMedia ||
+                                   navigator.webkitGetUserMedia ||
+                                   navigator.mozGetUserMedia;
+
+          if (legacyGetUserMedia) {
+            stream = await new Promise<MediaStream>((resolve, reject) => {
+              legacyGetUserMedia.call(navigator,
+                { audio: true },
+                resolve,
+                reject
+              );
+            });
+            console.log('✅ SUCCESS: Stream ottenuto con API legacy');
+          } else {
+            throw error; // Re-throw l'errore originale
+          }
+        } catch (legacyError: any) {
+          console.error('❌ Anche il metodo legacy è fallito:', legacyError);
+
+          // Messaggi di errore ultra-specifici
+          let errorMessage = 'Errore critico: impossibile accedere al microfono';
+
+          if (error.name === 'NotAllowedError') {
+            errorMessage = `PERMESSI NEGATI: Il browser ha bloccato l'accesso al microfono.
+
+SOLUZIONI:
+1. Cerca l'icona del microfono 🎤 nella barra degli indirizzi
+2. Clicca su di essa e seleziona "Consenti sempre"
+3. Ricarica la pagina (F5)
+4. Se non vedi l'icona, vai nelle Impostazioni del browser > Privacy e sicurezza > Impostazioni sito > Microfono`;
+
+          } else if (error.name === 'NotFoundError') {
+            errorMessage = `HARDWARE NON TROVATO: Nessun microfono disponibile.
+
+SOLUZIONI:
+1. Verifica che un microfono sia collegato fisicamente
+2. Controlla le impostazioni audio del sistema
+3. Riavvia il browser
+4. Prova con un altro microfono`;
+
+          } else if (error.name === 'NotReadableError') {
+            errorMessage = `MICROFONO OCCUPATO: Un'altra applicazione sta usando il microfono.
+
+SOLUZIONI:
+1. Chiudi Zoom, Teams, Discord, o altre app di videochiamata
+2. Chiudi altre schede del browser che usano il microfono
+3. Riavvia il browser`;
+
+          } else if (error.name === 'OverconstrainedError') {
+            errorMessage = `CONFIGURAZIONE INCOMPATIBILE: Le impostazioni richieste non sono supportate.
+
+DETTAGLIO TECNICO: Anche la configurazione più basilare ({ audio: true }) è fallita.
+Questo indica un problema serio con il browser o il sistema.`;
+
+          } else if (error.name === 'SecurityError') {
+            errorMessage = `ERRORE DI SICUREZZA: Problema con il protocollo di rete.
+
+SOLUZIONI:
+1. Verifica che l'URL inizi con https:// (non http://)
+2. Se stai testando in locale, usa localhost (non file://)`;
+
+          } else {
+            errorMessage = `ERRORE SCONOSCIUTO: ${error.message || 'Nessun dettaglio disponibile'}
+
+NOME ERRORE: ${error.name || 'Sconosciuto'}`;
+          }
+
+          throw new Error(errorMessage);
+        }
+      }
+
+      // Dopo aver ottenuto lo stream, aggiorna la lista dispositivi
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const currentAudioInputs = devices
+          .filter(device => device.kind === 'audioinput' && device.deviceId !== 'default')
+          .map(device => ({
+            deviceId: device.deviceId,
+            label: device.label || `Microfono ${device.deviceId.slice(0, 5)}`
+          }));
+
+        console.log('Dispositivi audio disponibili dopo acquisizione stream:', currentAudioInputs);
+
+        // Aggiorna lo stato dei dispositivi disponibili
+        setState(prev => ({
+          ...prev,
+          availableDevices: currentAudioInputs,
+          // Se non c'è dispositivo selezionato, usa il primo disponibile come riferimento
+          selectedDeviceId: prev.selectedDeviceId || currentAudioInputs[0]?.deviceId || ''
+        }));
+      } catch (enumError) {
+        console.warn('Errore durante enumerazione dispositivi post-stream:', enumError);
+        // Non interrompere la registrazione per errori di enumerazione
+      }
 
       streamRef.current = stream;
 
@@ -205,7 +475,7 @@ export const useSimpleAudioRecorder = () => {
       const errorMessage = getErrorMessage(error);
       setState(prev => ({ ...prev, error: errorMessage }));
     }
-  }, [state.isSupported, getErrorMessage]);
+  }, [state.isSupported, state.selectedDeviceId, getErrorMessage]);
 
   // Ferma registrazione
   const stopRecording = useCallback(() => {
@@ -282,5 +552,8 @@ export const useSimpleAudioRecorder = () => {
     pauseRecording,
     resumeRecording,
     clearRecording,
+    selectAudioDevice,
+    enumerateAudioDevices,
+    validateSelectedDevice,
   };
 };

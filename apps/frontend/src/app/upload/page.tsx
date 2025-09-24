@@ -187,65 +187,47 @@ export default function UploadPage() {
 
           {/* Step 2: Audio Recording */}
           {currentStep === 2 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
-                    <Mic className="w-5 h-5 text-primary-600" />
-                  </div>
-                  <div>
-                    <CardTitle>Registrazione Audio</CardTitle>
-                    <p className="text-sm text-secondary-600 mt-1">
-                      Registra la tua presentazione orale basandoti sui documenti caricati
-                    </p>
-                  </div>
+            <div className="space-y-6">
+              <SimpleAudioRecorder
+                onRecordingComplete={(audioBlob, duration) => {
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('Recording completed:', { audioBlob, duration });
+                  }
+                }}
+                onTranscriptionComplete={handleTranscriptionComplete}
+                autoTranscribe={true}
+                maxDuration={600} // 10 minutes
+              />
+
+              {transcription && (
+                <div className="p-4 bg-info-50 border border-info-200 rounded-lg">
+                  <h4 className="text-sm font-semibold text-info-800 mb-2">
+                    Contenuto della presentazione:
+                  </h4>
+                  <p className="text-sm text-info-700 leading-relaxed">
+                    {transcription}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <SimpleAudioRecorder
-                  onRecordingComplete={(audioBlob, duration) => {
-                    if (process.env.NODE_ENV === 'development') {
-                      console.log('Recording completed:', { audioBlob, duration });
-                    }
-                  }}
-                  onTranscriptionComplete={handleTranscriptionComplete}
-                  autoTranscribe={true}
-                  maxDuration={600} // 10 minutes
-                  className="mb-6"
-                />
+              )}
 
-                {transcription && (
-                  <div className="mt-6 p-4 bg-info-50 border border-info-200 rounded-lg">
-                    <h4 className="text-sm font-semibold text-info-800 mb-2">
-                      Contenuto della presentazione:
-                    </h4>
-                    <p className="text-sm text-info-700 leading-relaxed">
-                      {transcription}
-                    </p>
-                  </div>
-                )}
-
-                {transcription && (
-                  <div className="pt-6 border-t border-secondary-200">
-                    <div className="flex items-center justify-between">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentStep(1)}
-                      >
-                        Indietro
-                      </Button>
-                      <Button
-                        onClick={handleStartEvaluation}
-                        disabled={!transcription || !documentId}
-                      >
-                        Inizia Valutazione
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              {transcription && (
+                <div className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep(1)}
+                  >
+                    Indietro
+                  </Button>
+                  <Button
+                    onClick={handleStartEvaluation}
+                    disabled={!transcription || !documentId}
+                  >
+                    Inizia Valutazione
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Step 3: Evaluation */}
