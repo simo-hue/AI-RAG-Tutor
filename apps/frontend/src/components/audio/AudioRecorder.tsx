@@ -384,7 +384,7 @@ export const AudioRecorder = ({
         {error && (
           <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
             <AlertCircle className="w-5 h-5 text-error-600 flex-shrink-0" />
-            <p className="text-sm text-error-700">{error}</p>
+            <p className="text-sm text-error-700">{typeof error === 'string' ? error : 'Si è verificato un errore con l\'audio'}</p>
           </div>
         )}
 

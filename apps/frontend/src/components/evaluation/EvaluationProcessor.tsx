@@ -140,7 +140,18 @@ export const EvaluationProcessor = ({
       onEvaluationComplete(result);
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Errore sconosciuto durante la valutazione';
+      let errorMessage = 'Errore sconosciuto durante la valutazione';
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err && typeof err === 'object' && 'message' in err) {
+        errorMessage = String(err.message);
+      } else {
+        errorMessage = String(err);
+      }
+
       setError(errorMessage);
       setCurrentStage('error');
       onError(errorMessage);
@@ -295,7 +306,7 @@ export const EvaluationProcessor = ({
         <CardContent>
           <div className="space-y-4">
             <div className="p-4 bg-error-50 border border-error-200 rounded-lg">
-              <p className="text-sm text-error-700">{error}</p>
+              <p className="text-sm text-error-700">{typeof error === 'string' ? error : 'Si è verificato un errore durante la valutazione'}</p>
             </div>
             <div className="flex justify-center">
               <Button onClick={retry} variant="outline">

@@ -85,8 +85,14 @@ class EvaluationService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch((jsonError) => {
+        console.warn('Failed to parse error response as JSON:', jsonError);
+        return { error: null };
+      });
+      const errorMessage = typeof errorData?.error === 'string'
+        ? errorData.error
+        : `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     const data: APIResponse<EvaluationResult> = await response.json();
@@ -139,8 +145,14 @@ class EvaluationService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch((jsonError) => {
+        console.warn('Failed to parse error response as JSON:', jsonError);
+        return { error: null };
+      });
+      const errorMessage = typeof errorData?.error === 'string'
+        ? errorData.error
+        : `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     const data: APIResponse = await response.json();

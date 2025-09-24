@@ -463,7 +463,7 @@ export const DocumentUpload = ({
                     )}
 
                     {uploadedFile.error && (
-                      <p className="text-xs text-error-600 mt-1">{uploadedFile.error}</p>
+                      <p className="text-xs text-error-600 mt-1">{typeof uploadedFile.error === 'string' ? uploadedFile.error : 'Errore di caricamento'}</p>
                     )}
 
                     {/* Detailed status description */}

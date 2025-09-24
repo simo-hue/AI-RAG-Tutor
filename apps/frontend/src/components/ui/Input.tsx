@@ -3,7 +3,7 @@ import { cn } from '@/utils/cn';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
+  error?: string | unknown;
   helperText?: string;
 }
 
@@ -36,7 +36,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-error-600">{error}</p>
+          <p className="mt-1 text-sm text-error-600">
+            {typeof error === 'string' ? error : 'An error occurred'}
+          </p>
         )}
         {helperText && !error && (
           <p className="mt-1 text-sm text-secondary-500">{helperText}</p>

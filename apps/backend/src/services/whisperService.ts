@@ -167,9 +167,13 @@ export class WhisperService {
   }> {
     return new Promise((resolve, reject) => {
       const outputDir = path.dirname(audioFilePath);
+      const homeDir = require('os').homedir();
+      const modelCachePath = `${homeDir}/.cache/whisper`;
+
       const args = [
         audioFilePath,
         '--model', transcriptionConfig.modelName,
+        '--model_dir', modelCachePath,
         '--output_dir', outputDir,
         '--output_format', options.format,
         '--task', options.task

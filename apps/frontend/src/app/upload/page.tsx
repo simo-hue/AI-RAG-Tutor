@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { DocumentUpload, ProcessedDocument } from '@/components/document/DocumentUpload';
-import { AudioRecorder } from '@/components/audio/AudioRecorder';
+import { SimpleAudioRecorder } from '@/components/audio/SimpleAudioRecorder';
 import { EvaluationProcessor } from '@/components/evaluation/EvaluationProcessor';
 import { EvaluationResults } from '@/components/evaluation/EvaluationResults';
 import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
@@ -202,14 +202,13 @@ export default function UploadPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <AudioRecorder
+                <SimpleAudioRecorder
                   onRecordingComplete={(audioBlob, duration) => {
                     if (process.env.NODE_ENV === 'development') {
                       console.log('Recording completed:', { audioBlob, duration });
                     }
                   }}
                   onTranscriptionComplete={handleTranscriptionComplete}
-                  documentId={documentId || undefined}
                   autoTranscribe={true}
                   maxDuration={600} // 10 minutes
                   className="mb-6"
@@ -285,7 +284,12 @@ export default function UploadPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="p-4 bg-error-50 border border-error-200 rounded-lg">
-                        <p className="text-sm text-error-700">{evaluationError}</p>
+                        <p className="text-sm text-error-700">
+                          {typeof evaluationError === 'string'
+                            ? evaluationError
+                            : 'Si è verificato un errore durante la valutazione.'
+                          }
+                        </p>
                       </div>
                       <div className="flex items-center justify-between">
                         <Button
