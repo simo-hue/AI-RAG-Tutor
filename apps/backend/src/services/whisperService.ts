@@ -243,15 +243,15 @@ export class WhisperService {
   }> {
     try {
       // Import node-whisper dynamically
-      const { nodewhisper } = await import('node-whisper');
+      const nodeWhisper = await import('node-whisper');
+      const whisperFunc = nodeWhisper.default;
 
-      const transcript = await nodewhisper(audioFilePath, {
-        modelName: transcriptionConfig.modelName,
-        whisperOptions: {
-          language: options.language === 'auto' ? undefined : options.language,
-          task: options.task,
-          output_format: options.format
-        }
+      const transcript = await whisperFunc(audioFilePath, {
+        model: transcriptionConfig.modelName,
+        language: options.language === 'auto' ? undefined : options.language,
+        task: options.task,
+        output_format: options.format,
+        verbose: true
       });
 
       return {

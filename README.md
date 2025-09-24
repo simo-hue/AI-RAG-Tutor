@@ -1,6 +1,8 @@
 # AI Speech Evaluator - Sistema di Valutazione Presentazioni 🎯
 
-Un sistema **completamente locale** di valutazione speech-to-text basato su RAG (Retrieval-Augmented Generation) che analizza presentazioni orali confrontandole con documenti di riferimento utilizzando **Ollama** e **Whisper locale**.
+Un sistema **completamente locale** e **operativo** di valutazione speech-to-text basato su RAG (Retrieval-Augmented Generation) che analizza presentazioni orali confrontandole con documenti di riferimento utilizzando **Ollama** e **Whisper locale**.
+
+**🚀 STATUS: PIENAMENTE FUNZIONANTE** - Sistema testato e operativo per il flusso completo: Upload → Registrazione → Trascrizione → Valutazione AI
 
 ## 🌟 Caratteristiche Principali
 
@@ -10,14 +12,15 @@ Un sistema **completamente locale** di valutazione speech-to-text basato su RAG 
 - **Costi zero** - Nessun costo per API calls
 - **Controllo completo** - Modelli e configurazioni personalizzabili
 
-### 🚀 **Funzionalità Complete**
-- **Upload Documenti Multi-formato**: PDF, DOCX, TXT con drag & drop
-- **Registrazione Audio Professionale**: Waveform real-time e controlli avanzati
-- **Speech-to-Text Locale**: Trascrizione con Whisper locale (no OpenAI)
-- **Sistema RAG Intelligente**: Embedding e similarity search con Ollama
-- **Valutazione AI Completa**: Scoring multi-criterio con feedback dettagliato
-- **Interfaccia Moderna**: Design responsive con Tailwind CSS
-- **Architettura Professionale**: Middleware di sicurezza, logging, rate limiting
+### 🚀 **Funzionalità Complete (100% Operative)**
+- ✅ **Upload Documenti Multi-formato**: PDF, DOCX, TXT con drag & drop
+- ✅ **Registrazione Audio Professionale**: Waveform real-time e controlli avanzati
+- ✅ **Speech-to-Text Locale**: Trascrizione Whisper completamente configurata
+- ✅ **Sistema RAG Intelligente**: Embedding e similarity search con Ollama
+- ✅ **Valutazione AI Completa**: Scoring multi-criterio con feedback dettagliato
+- ✅ **Interfaccia Moderna**: Design responsive con Tailwind CSS
+- ✅ **Architettura Professionale**: Middleware di sicurezza, logging, rate limiting
+- ✅ **Gestione Automatica Porte**: Cleanup automatico per evitare conflitti
 
 ## 🏗️ Architettura
 
@@ -56,24 +59,25 @@ ai-speech-evaluator/
 - **Express Rate Limit** - Rate limiting granulare
 - **Express Validator** - Validazione input robusta
 
-### 🤖 **AI & ML Locale**
-- **Ollama** - LLM locale (Llama 3.2, Qwen, ecc.)
-- **Whisper Local** - Speech-to-text locale (Whisper.cpp)
-- **Vector Store** - Similarity search in-memory o Pinecone
-- **Custom RAG Pipeline** - Implementazione RAG ottimizzata
-- **Embedding Locale** - Nomic Embed Text via Ollama
+### 🤖 **AI & ML Locale (Configurato e Testato)**
+- **Ollama** ✅ - LLM locale (Llama 3.2:3b, Qwen, ecc.)
+- **OpenAI Whisper** ✅ - Speech-to-text locale con modello base precaricato
+- **Vector Store** ✅ - Similarity search in-memory o Pinecone
+- **Custom RAG Pipeline** ✅ - Implementazione RAG ottimizzata e testata
+- **Embedding Locale** ✅ - Nomic Embed Text via Ollama (768 dimensioni)
 
 ## 🚀 Quick Start
 
-### Prerequisiti
-- **Node.js 18+** - Runtime JavaScript
-- **Ollama** - Server LLM locale ([Installa qui](https://ollama.ai))
-- **Browser moderno** - Con supporto MediaRecorder API
+### Prerequisiti (Obbligatori)
+- **Node.js 18+** ✅ - Runtime JavaScript
+- **Python 3.8+** ✅ - Per OpenAI Whisper
+- **Ollama** ✅ - Server LLM locale ([Installa qui](https://ollama.ai))
+- **Browser moderno** ✅ - Con supporto MediaRecorder API
 
 ### Prerequisiti Opzionali
-- **Whisper.cpp** - Per trascrizione audio ottimizzata
 - **PostgreSQL** - Per storage persistente (futuro)
 - **Pinecone** - Per vector database cloud (opzionale)
+- **Docker** - Per deployment containerizzato
 
 ### 🔧 Installazione
 
@@ -90,7 +94,20 @@ ollama pull llama3.2:3b          # Modello LLM principale
 ollama pull nomic-embed-text     # Modello per embeddings
 ```
 
-#### 2. **Clone e Setup Progetto**
+#### 2. **Setup OpenAI Whisper (Obbligatorio)**
+```bash
+# Installa OpenAI Whisper per trascrizione locale
+pip3 install openai-whisper
+
+# Verifica installazione
+whisper --help
+
+# Il modello 'base' verrà scaricato automaticamente al primo uso
+# Puoi pre-scaricare il modello per evitare latenza:
+python3 -c "import whisper; whisper.load_model('base')"
+```
+
+#### 3. **Clone e Setup Progetto**
 ```bash
 # Clone repository
 git clone https://github.com/simo-hue/AI-RAG-Tutor.git
@@ -103,11 +120,11 @@ npm install
 cp apps/backend/.env.example apps/backend/.env
 ```
 
-#### 3. **Configurazione Base (.env)**
+#### 4. **Configurazione Base (.env)**
 ```bash
 # File: apps/backend/.env
 NODE_ENV=development
-PORT=3001
+PORT=3002
 
 # Ollama Configuration
 OLLAMA_HOST=http://localhost:11434
@@ -125,20 +142,52 @@ UPLOAD_DIR=./uploads
 FRONTEND_URL=http://localhost:3000
 ```
 
-#### 4. **Avvia Applicazione**
+#### 5. **Avvia Applicazione**
 ```bash
 # Avvia entrambi i servizi contemporaneamente
 npm run dev
 
 # Oppure separatamente:
 npm run dev:frontend    # Frontend su porta 3000
-npm run dev:backend     # Backend su porta 3001
+npm run dev:backend     # Backend su porta 3002
 ```
 
 ### ✅ **Verifica Setup**
 1. **Frontend**: http://localhost:3000
-2. **Backend Health**: http://localhost:3001/api/health
+2. **Backend Health**: http://localhost:3002/api/health
 3. **Ollama Status**: http://localhost:11434/api/tags
+4. **Whisper Test**: `whisper --help` (deve mostrare help senza errori)
+
+### 🔧 **Troubleshooting Comuni**
+
+#### Errore EADDRINUSE (Porta già in uso)
+```bash
+# Il sistema include cleanup automatico, ma in caso di problemi:
+npm run restart        # Cleanup automatico e restart
+# oppure manualmente:
+npm run kill-ports     # Kill processi su porte 3000,3002
+```
+
+#### Errore Whisper SSL/Certificati
+```bash
+# Se Whisper non riesce a scaricare modelli:
+python3 -c "
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+import whisper
+whisper.load_model('base')
+"
+```
+
+#### Ollama non risponde
+```bash
+# Riavvia Ollama
+pkill ollama
+ollama serve
+
+# Verifica modelli installati
+ollama list
+```
 
 ## 🎯 **Funzionalità Complete Disponibili**
 
@@ -358,9 +407,36 @@ npm run start
 
 Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
 
+## 📈 **Aggiornamenti Recenti**
+
+### ✅ **v1.5.0 - Sistema Completamente Operativo** (Settembre 2024)
+- **🎯 Whisper Integration**: Configurato e testato OpenAI Whisper locale
+- **🔧 Automatic Port Management**: Sistema di cleanup automatico porte
+- **🎨 Enhanced UI**: Interface completa per valutazione con tabs e statistiche
+- **🚀 Real-time Processing**: Visualizzazione backend processing in tempo reale
+- **🛡️ Security Hardening**: Middleware di sicurezza completo
+- **📊 Comprehensive Analytics**: Dashboard statistiche avanzato
+- **✅ End-to-End Testing**: Pipeline completa testata e validata
+
+### 🎯 **Roadmap Prossimi Aggiornamenti**
+- **Database Persistence**: Integrazione PostgreSQL per storage permanente
+- **User Management**: Sistema di autenticazione e profili utente
+- **Batch Processing**: Valutazione multipla e confronto presentazioni
+- **Advanced Analytics**: Metriche di performance e trend analysis
+- **Mobile Responsive**: Ottimizzazione completa per dispositivi mobili
+- **Docker Deployment**: Container production-ready
+
 ## 🆘 Supporto
 
 Per problemi o domande:
 - Apri un [Issue](https://github.com/simo-hue/AI-RAG-Tutor/issues)
 - Consulta la [documentazione](./docs/)
 - Contatta il team di sviluppo
+
+### 🐛 **Bug Reports**
+Quando riporti un bug, includi:
+1. **Sistema Operativo**: macOS/Linux/Windows
+2. **Versioni**: Node.js, Python, npm
+3. **Log Output**: Output dei terminali frontend/backend
+4. **Passi per riprodurre**: Sequenza dettagliata del problema
+5. **File coinvolti**: Tipi di documenti e formati audio usati

@@ -22,9 +22,11 @@ import {
   AlertTriangle,
   Info,
   Download,
-  Share2
+  Share2,
+  Activity
 } from 'lucide-react';
 import { EvaluationResult } from '@/services/evaluationService';
+import { EvaluationStatistics } from './EvaluationStatistics';
 
 interface EvaluationResultsProps {
   evaluationResult: EvaluationResult;
@@ -37,7 +39,7 @@ export const EvaluationResults = ({
   onRestart,
   className
 }: EvaluationResultsProps) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'criteria' | 'context' | 'suggestions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'statistics' | 'criteria' | 'context' | 'suggestions'>('overview');
 
   const { evaluation, contextUsed, evaluationId } = evaluationResult;
 
@@ -132,6 +134,7 @@ export const EvaluationResults = ({
       <div className="flex space-x-1 bg-secondary-100 rounded-lg p-1">
         {[
           { id: 'overview', label: 'Panoramica', icon: BarChart3 },
+          { id: 'statistics', label: 'Statistiche', icon: Activity },
           { id: 'criteria', label: 'Criteri Dettagliati', icon: Target },
           { id: 'context', label: 'Contesto RAG', icon: Brain },
           { id: 'suggestions', label: 'Suggerimenti', icon: TrendingUp }
@@ -228,6 +231,17 @@ export const EvaluationResults = ({
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {activeTab === 'statistics' && (
+        <EvaluationStatistics
+          data={{
+            overallScore: evaluation.overallScore,
+            criteria: evaluation.criteria,
+            metadata: evaluation.metadata,
+            contextUsed: contextUsed
+          }}
+        />
       )}
 
       {activeTab === 'criteria' && (

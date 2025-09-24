@@ -72,7 +72,7 @@ class EvaluationService {
       detailedFeedback?: boolean;
     }
   ): Promise<EvaluationResult> {
-    const response = await fetch(`${this.baseUrl}/api/evaluation/evaluate`, {
+    const response = await fetch(`${this.baseUrl}/api/evaluations/evaluate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ class EvaluationService {
   }
 
   async getEvaluationHealth(): Promise<HealthCheckResult> {
-    const response = await fetch(`${this.baseUrl}/api/evaluation/health`, {
+    const response = await fetch(`${this.baseUrl}/api/evaluations/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ class EvaluationService {
     feedback: string;
     processingTime: string;
   }> {
-    const response = await fetch(`${this.baseUrl}/api/evaluation/quick`, {
+    const response = await fetch(`${this.baseUrl}/api/evaluations/quick`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

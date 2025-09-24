@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "dev:clean": "npm run kill-port && npm run dev",
+    "kill-port": "lsof -ti:3002 | xargs kill -9 2>/dev/null || echo 'Port 3002 is available'",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",

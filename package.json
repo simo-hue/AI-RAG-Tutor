@@ -10,6 +10,9 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:clean": "npm run kill-ports && npm run dev",
+    "kill-ports": "lsof -ti:3000,3002 | xargs kill -9 2>/dev/null || echo 'Ports 3000,3002 are available'",
+    "restart": "npm run kill-ports && npm run dev",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
