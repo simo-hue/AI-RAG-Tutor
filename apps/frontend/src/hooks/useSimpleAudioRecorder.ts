@@ -258,35 +258,36 @@ export const useSimpleAudioRecorder = () => {
         const devices = await navigator.mediaDevices.enumerateDevices();
         console.log('Tutti i dispositivi trovati:', devices);
 
+        // Debug completo di tutti i dispositivi
+        devices.forEach((device, index) => {
+          console.log(`Dispositivo ${index + 1}:`, {
+            kind: device.kind,
+            label: device.label || 'Label non disponibile',
+            deviceId: device.deviceId || 'ID non disponibile',
+            groupId: device.groupId || 'Group non disponibile'
+          });
+        });
+
         const audioInputs = devices.filter(device => device.kind === 'audioinput');
         console.log(`📱 Dispositivi audio input trovati: ${audioInputs.length}`);
 
-        audioInputs.forEach((device, index) => {
-          console.log(`  ${index + 1}. ${device.label || 'Dispositivo sconosciuto'} (ID: ${device.deviceId})`);
-        });
-
+        // IMPORTANTE: Su molti browser, i dispositivi non mostrano label e dettagli
+        // fino a quando l'utente non concede i permessi espliciti
         if (audioInputs.length === 0) {
-          console.error('❌ PROBLEMA CRITICO: Nessun dispositivo audio input trovato dal sistema!');
-          throw new Error(`NESSUN MICROFONO RILEVATO dal sistema.
+          console.warn('⚠️ Nessun dispositivo audioinput trovato nella prima scansione');
+          console.log('🔄 TENTATIVO DI FORZARE LA RICHIESTA PERMESSI...');
 
-🔧 DIAGNOSI: Il sistema operativo non vede nessun dispositivo di input audio.
-
-📋 SOLUZIONI IMMEDIATE:
-1. Controlla che un microfono sia fisicamente collegato
-2. Su Mac: Sistema > Preferenze > Suono > Input
-3. Su Windows: Impostazioni > Sistema > Audio > Input
-4. Verifica che il microfono sia abilitato nelle impostazioni del sistema
-5. Prova a scollegare e ricollegare il microfono
-6. Riavvia il browser completamente
-7. Se usi cuffie USB/Bluetooth, verifica che siano connesse correttamente
-
-🚨 IMPORTANTE: Il browser può accedere solo ai microfoni che il sistema operativo riesce a vedere.`);
+          // Non lanciare errore immediatamente, tenta prima la richiesta audio
+          // Questo è normale behavior prima che l'utente conceda i permessi
+        } else {
+          console.log('✅ Dispositivi audio trovati nella prima scansione');
+          audioInputs.forEach((device, index) => {
+            console.log(`  ${index + 1}. ${device.label || 'Dispositivo sconosciuto'} (ID: ${device.deviceId})`);
+          });
         }
 
-        console.log('✅ Dispositivi audio trovati, procedendo con la richiesta...');
-
       } catch (enumError) {
-        console.warn('⚠️ Impossibile enumerare dispositivi (questo può essere normale prima dei permessi):', enumError);
+        console.warn('⚠️ Impossibile enumerare dispositivi (normale prima dei permessi):', enumError);
       }
 
       let stream: MediaStream;
@@ -294,6 +295,26 @@ export const useSimpleAudioRecorder = () => {
       // METODO ULTRA-SEMPLIFICATO: Usa SOLO la sintassi più basilare possibile
       try {
         console.log('🎤 Tentando getUserMedia con { audio: true } - metodo più basilare possibile');
+
+        // Prima verifica se i permessi sono già stati concessi
+        try {
+          const permissions = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          console.log('Stato permessi microfono:', permissions.state);
+
+          if (permissions.state === 'denied') {
+            throw new Error(`PERMESSI MICROFONO ESPLICITAMENTE NEGATI
+
+🚫 DIAGNOSI: L'utente ha esplicitamente negato l'accesso al microfono.
+
+📋 SOLUZIONI:
+1. 🔧 SAFARI: Safari > Impostazioni > Siti web > Microfono > Trova questo sito > Cambia da "Nega" a "Consenti"
+2. 🔄 Ricarica la pagina completamente
+3. 🎤 Nella barra degli indirizzi, cerca l'icona del microfono e clicca "Consenti"
+4. 🗑️ Cancella i dati del sito: Safari > Sviluppo > Svuota cache e riprova`);
+          }
+        } catch (permissionError) {
+          console.warn('Impossibile verificare i permessi (normale su alcuni browser):', permissionError);
+        }
 
         // Usa la sintassi più semplice possibile senza nessun constraint
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -361,13 +382,21 @@ SOLUZIONI:
 4. Se non vedi l'icona, vai nelle Impostazioni del browser > Privacy e sicurezza > Impostazioni sito > Microfono`;
 
           } else if (error.name === 'NotFoundError') {
-            errorMessage = `HARDWARE NON TROVATO: Nessun microfono disponibile.
+            errorMessage = `MICROFONO NON TROVATO: Safari/browser non riesce ad accedere ai dispositivi audio.
 
-SOLUZIONI:
-1. Verifica che un microfono sia collegato fisicamente
-2. Controlla le impostazioni audio del sistema
-3. Riavvia il browser
-4. Prova con un altro microfono`;
+🔧 DIAGNOSI SPECIFICA:
+Il browser ha visto ${state.availableDevices?.length || 0} dispositivi ma nessuno classificato come "audioinput".
+
+📋 SOLUZIONI IMMEDIATE:
+1. 🎤 SAFARI: Vai su Safari > Impostazioni > Siti web > Microfono
+2. 🔍 Trova questo sito e imposta su "Consenti"
+3. 🔄 Ricarica completamente la pagina (Cmd+R)
+4. 🎛️ MACOS: Sistema > Privacy e sicurezza > Microfono > Verifica che Safari sia abilitato
+5. 🔌 Verifica fisicamente che un microfono sia collegato (cuffie/microfono esterno)
+6. 🎧 Se usi AirPods/cuffie Bluetooth, verifica che siano connesse
+7. 🔊 VERIFICA SISTEMA: Vai in Preferenze Sistema > Suono > Input
+
+💡 SUGGERIMENTO: Prova a registrare un memo vocale con l'app "Memo Vocali" per verificare che il microfono funzioni a livello sistema.`;
 
           } else if (error.name === 'NotReadableError') {
             errorMessage = `MICROFONO OCCUPATO: Un'altra applicazione sta usando il microfono.
