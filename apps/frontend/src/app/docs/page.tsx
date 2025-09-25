@@ -1,6 +1,41 @@
 'use client';
 
+import { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
+import { StructuredData } from '@/components/seo/StructuredData';
+
+export const metadata: Metadata = {
+  title: 'Documentazione Completa - AI Speech Evaluator',
+  description: 'Guida completa per utilizzare AI Speech Evaluator. Tutorial passo-passo, risoluzione problemi, esempi pratici e casi d\'uso per studenti e professionisti. Impara a migliorare le tue presentazioni orali con l\'AI.',
+  keywords: [
+    'guida AI speech evaluator',
+    'tutorial valutazione presentazioni',
+    'come usare speech evaluator AI',
+    'documentazione presentazioni orali',
+    'manuale utente AI feedback',
+    'guida preparazione esami orali',
+    'tutorial speech coaching AI',
+    'istruzioni valutazione discorso',
+    'documentazione RAG presentazioni',
+    'help speech analysis AI'
+  ],
+  openGraph: {
+    title: 'Documentazione Completa - AI Speech Evaluator',
+    description: 'Guida completa con tutorial, esempi e risoluzione problemi per utilizzare al meglio AI Speech Evaluator nel miglioramento delle tue presentazioni orali.',
+    url: 'https://ai-speech-evaluator.com/docs',
+    images: [
+      {
+        url: '/docs-og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Documentazione AI Speech Evaluator - Guida Completa'
+      }
+    ],
+  },
+  alternates: {
+    canonical: 'https://ai-speech-evaluator.com/docs',
+  },
+};
 import { Footer } from '@/components/layout/Footer';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import {
@@ -22,8 +57,34 @@ import Link from 'next/link';
 
 export default function DocsPage() {
   return (
-    <div className="min-h-screen">
-      <Header />
+    <>
+      <StructuredData type="faq" />
+      <StructuredData type="educational" />
+      <StructuredData
+        type="educational"
+        data={{
+          "@type": "TechArticle",
+          "headline": "Documentazione Completa AI Speech Evaluator",
+          "description": "Guida completa per utilizzare AI Speech Evaluator. Tutorial, esempi pratici e risoluzione problemi per migliorare le presentazioni orali.",
+          "author": {
+            "@type": "Organization",
+            "name": "AI Speech Evaluator Team"
+          },
+          "datePublished": "2024-01-15",
+          "dateModified": new Date().toISOString().split('T')[0],
+          "wordCount": "2500",
+          "inLanguage": "it-IT",
+          "about": [
+            "Speech evaluation with AI",
+            "Presentation training tools",
+            "Educational AI applications",
+            "RAG technology tutorial"
+          ]
+        }}
+      />
+
+      <div className="min-h-screen">
+        <Header />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary-50 to-secondary-50 py-16">
@@ -523,6 +584,7 @@ export default function DocsPage() {
       </section>
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

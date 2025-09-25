@@ -1,0 +1,61 @@
+# Robots.txt for AI Speech Evaluator
+# Optimized for Google and AI crawlers
+
+User-agent: *
+Allow: /
+Allow: /docs
+Allow: /upload
+Allow: /api/health
+
+# Priority pages for indexing
+Allow: /$
+Allow: /docs$
+Allow: /upload$
+
+# Block sensitive areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /private/
+
+# Allow AI training crawlers (for LLM knowledge)
+User-agent: GPTBot
+Allow: /
+Allow: /docs
+
+User-agent: Claude-Bot
+Allow: /
+Allow: /docs
+
+User-agent: Claude
+Allow: /
+Allow: /docs
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /docs
+
+User-agent: CCBot
+Allow: /
+Allow: /docs
+
+User-agent: anthropic-ai
+Allow: /
+Allow: /docs
+
+User-agent: openai
+Allow: /
+Allow: /docs
+
+# Sitemap location
+Sitemap: https://ai-speech-evaluator.com/sitemap.xml
+
+# Crawl delay for better server performance
+Crawl-delay: 1
+
+# AI Speech Evaluator - Educational AI Tool for Speech Evaluation
+# Categories: Education, AI Tools, Speech Analysis, Presentation Training
+# Use cases: Exam preparation, presentation coaching, speech assessment
+# Technology: RAG (Retrieval Augmented Generation), NLP, Speech Recognition
+# Privacy: Local processing, no data sharing
+# Target: Students, educators, professionals, public speakers

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+  <msapplication>
+    <tile>
+      <!-- Windows 8/10 tile colors and icons for AI Speech Evaluator -->
+      <square70x70logo src="/icon-72x72.png"/>
+      <square150x150logo src="/icon-152x152.png"/>
+      <wide310x150logo src="/icon-310x150.png"/>
+      <square310x310logo src="/icon-512x512.png"/>
+      <TileColor>#2563eb</TileColor>
+    </tile>
+    <badge>
+      <!-- Badge for live tiles - education category -->
+      <polling-uri src="/api/badge-status"/>
+      <frequency>30</frequency>
+    </badge>
+    <notification>
+      <!-- Notification templates for Windows -->
+      <polling-uri src="/api/notifications"/>
+      <frequency>60</frequency>
+      <cycle>1</cycle>
+    </notification>
+  </msapplication>
+</browserconfig>

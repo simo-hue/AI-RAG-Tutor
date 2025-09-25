@@ -1,7 +1,9 @@
 'use client';
 
+import { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { StructuredData } from '@/components/seo/StructuredData';
 import { Button, Card, CardHeader, CardTitle, CardContent, Badge } from '@/components/ui';
 import {
   Upload,
@@ -18,8 +20,14 @@ import Link from 'next/link';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      <Header />
+    <>
+      <StructuredData type="website" />
+      <StructuredData type="software" />
+      <StructuredData type="product" />
+      <StructuredData type="educational" />
+
+      <div className="min-h-screen">
+        <Header />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -209,6 +217,7 @@ export default function HomePage() {
       </section>
 
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
