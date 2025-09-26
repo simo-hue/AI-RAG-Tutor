@@ -7,6 +7,7 @@ import { StructuredData } from '@/components/seo/StructuredData';
 import { DocumentUpload, ProcessedDocument } from '@/components/document/DocumentUpload';
 import { SimpleAudioRecorder } from '@/components/audio/SimpleAudioRecorder';
 import { EvaluationProcessor } from '@/components/evaluation/EvaluationProcessor';
+import { OllamaStatusPanel } from '@/components/admin/OllamaStatus';
 import { EvaluationResults } from '@/components/evaluation/EvaluationResults';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import { FileText, ArrowRight, CheckCircle, Mic, BarChart3 } from 'lucide-react';
@@ -54,6 +55,29 @@ export default function UploadPage() {
   const handleEvaluationError = (error: string) => {
     setEvaluationError(error);
     setIsEvaluating(false);
+  };
+
+  const handleFeedbackRequest = () => {
+    // Debug: log current state
+    console.log('Feedback richiesto - Stato corrente:', {
+      transcription: transcription?.substring(0, 50) + '...',
+      transcriptionLength: transcription?.length,
+      documentId,
+      processedDocuments: processedDocuments.length
+    });
+
+    // When feedback is requested, start the evaluation process if we have transcription and document
+    if (transcription && documentId) {
+      console.log('✅ Condizioni soddisfatte, avvio valutazione');
+      handleStartEvaluation();
+    } else {
+      // Show detailed alert with current state
+      const missing = [];
+      if (!transcription) missing.push('trascrizione');
+      if (!documentId) missing.push('documento');
+
+      alert(`Elementi mancanti: ${missing.join(', ')}.\nAssicurati di aver caricato un documento e completato la registrazione.`);
+    }
   };
 
   const handleRestart = () => {
@@ -248,6 +272,7 @@ export default function UploadPage() {
                   }
                 }}
                 onTranscriptionComplete={handleTranscriptionComplete}
+                onFeedbackRequest={handleFeedbackRequest}
                 autoTranscribe={true}
                 maxDuration={600} // 10 minutes
               />
@@ -351,6 +376,17 @@ export default function UploadPage() {
                             : 'Si è verificato un errore durante la valutazione.'
                           }
                         </p>
+
+                        {/* Show Ollama diagnostics if there's a service error */}
+                        {(evaluationError?.includes('Service') ||
+                          evaluationError?.includes('RAG') ||
+                          evaluationError?.includes('initialized') ||
+                          evaluationError?.includes('Internal Server Error')) && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-medium text-error-800 mb-2">🔧 Pannello Diagnostico</h4>
+                            <OllamaStatusPanel />
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center justify-between">
                         <Button

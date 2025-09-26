@@ -95,4 +95,68 @@ router.post('/ollama/start', healthLimiter, async (req, res) => {
   }
 });
 
+// Test Ollama models specifically
+router.get('/ollama/models', healthLimiter, async (req, res) => {
+  try {
+    const status = await ollamaManager.getStatus();
+    const modelCheck = await ollamaManager.areModelsAvailable();
+
+    res.json({
+      success: status.running && modelCheck.available,
+      ollama: {
+        running: status.running,
+        models: status.models || [],
+        version: status.version
+      },
+      modelCheck: {
+        available: modelCheck.available,
+        missing: modelCheck.missing,
+        required: [
+          process.env.OLLAMA_MODEL || 'llama3:latest',
+          process.env.OLLAMA_EMBEDDING_MODEL || 'all-minilm'
+        ]
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check Ollama models',
+      error: error.message
+    });
+  }
+});
+
+// Force refresh Ollama connection
+router.post('/ollama/refresh', healthLimiter, async (req, res) => {
+  try {
+    // First check if Ollama is running
+    const running = await ollamaManager.isOllamaRunning();
+
+    if (!running) {
+      return res.status(503).json({
+        success: false,
+        message: 'Ollama is not running. Start it first.',
+        suggestion: 'Use POST /api/health/ollama/start to start Ollama'
+      });
+    }
+
+    // Check models
+    const modelCheck = await ollamaManager.areModelsAvailable();
+    const status = await ollamaManager.getStatus();
+
+    res.json({
+      success: modelCheck.available,
+      message: modelCheck.available ? 'Ollama is ready' : 'Some models are missing',
+      ...status,
+      modelCheck
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error refreshing Ollama status',
+      error: error.message
+    });
+  }
+});
+
 export { router as healthRoutes };

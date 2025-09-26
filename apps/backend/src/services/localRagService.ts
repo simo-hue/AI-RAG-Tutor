@@ -100,8 +100,26 @@ export class LocalRAGService {
       const content = await this.parseDocument(filePath);
       const chunks = this.chunkDocument(content);
 
+      // Preprocessing semantico dei chunks per migliorare la qualità degli embeddings
+      const preprocessedChunks = chunks.map(chunk => this.preprocessChunkForEmbedding(chunk));
+
       // Generate embeddings for all chunks
-      const embeddings = await this.ollamaService!.generateEmbeddings(chunks);
+      console.log('🔍 DEBUG - Generating embeddings for chunks:', {
+        documentId,
+        chunkCount: chunks.length,
+        firstChunkPreview: chunks[0]?.substring(0, 100) + '...',
+        firstPreprocessedPreview: preprocessedChunks[0]?.substring(0, 100) + '...'
+      });
+
+      const embeddings = await this.ollamaService!.generateEmbeddings(preprocessedChunks);
+
+      console.log('🔍 DEBUG - Embeddings generated:', {
+        documentId,
+        embeddingsCount: embeddings.length,
+        firstEmbeddingLength: embeddings[0]?.length,
+        firstEmbeddingPreview: embeddings[0]?.slice(0, 5),
+        firstEmbeddingNorm: embeddings[0] ? Math.sqrt(embeddings[0].reduce((sum, val) => sum + val * val, 0)) : 0
+      });
 
       // Create vector documents
       const vectorDocuments: VectorDocument[] = chunks.map((chunk, index) => ({
@@ -188,27 +206,223 @@ export class LocalRAGService {
     const chunkSize = ragConfig.chunking.chunkSize;
     const overlap = ragConfig.chunking.chunkOverlap;
 
-    // Simple chunking by characters with overlap
+    // Preprocessing del contenuto per migliorare la qualità dei chunk
+    const preprocessedContent = this.preprocessContent(content);
+
+    // Strategia di chunking semantico migliorata
+    if (ragConfig.chunking.preserveParagraphs) {
+      return this.chunkByParagraphs(preprocessedContent, chunkSize, overlap);
+    } else if (ragConfig.chunking.preserveSentences) {
+      return this.chunkBySentences(preprocessedContent, chunkSize, overlap);
+    } else {
+      return this.chunkByWords(preprocessedContent, chunkSize, overlap);
+    }
+  }
+
+  private preprocessContent(content: string): string {
+    // Normalizza spazi multipli e caratteri speciali
+    let processed = content
+      .replace(/\s+/g, ' ') // Normalizza spazi multipli
+      .replace(/\n\s*\n/g, '\n\n') // Normalizza paragrafi multipli
+      .replace(/[""]/g, '"') // Normalizza virgolette
+      .replace(/['']/g, "'") // Normalizza apostrofi
+      .trim();
+
+    return processed;
+  }
+
+  private chunkByParagraphs(content: string, chunkSize: number, overlap: number): string[] {
+    const paragraphs = content.split(/\n\s*\n/);
     const chunks: string[] = [];
-    let start = 0;
+    let currentChunk = '';
 
-    while (start < content.length) {
-      const end = Math.min(start + chunkSize, content.length);
-      let chunk = content.slice(start, end);
+    for (const paragraph of paragraphs) {
+      const trimmedParagraph = paragraph.trim();
+      if (!trimmedParagraph) continue;
 
-      // Try to break at word boundaries
-      if (ragConfig.chunking.preserveSentences && end < content.length) {
-        const lastSentence = chunk.lastIndexOf('.');
-        if (lastSentence > chunkSize * 0.5) {
-          chunk = content.slice(start, start + lastSentence + 1);
+      // Se il paragrafo da solo è più grande della dimensione del chunk
+      if (trimmedParagraph.length > chunkSize) {
+        // Salva il chunk corrente se non è vuoto
+        if (currentChunk.trim()) {
+          chunks.push(currentChunk.trim());
+          currentChunk = '';
+        }
+        // Spezza il paragrafo in frasi
+        const sentenceChunks = this.chunkBySentences(trimmedParagraph, chunkSize, overlap);
+        chunks.push(...sentenceChunks);
+      } else if ((currentChunk + '\n\n' + trimmedParagraph).length > chunkSize) {
+        // Salva il chunk corrente e inizia uno nuovo
+        if (currentChunk.trim()) {
+          chunks.push(currentChunk.trim());
+        }
+        currentChunk = trimmedParagraph;
+      } else {
+        // Aggiungi il paragrafo al chunk corrente
+        currentChunk += currentChunk ? '\n\n' + trimmedParagraph : trimmedParagraph;
+      }
+    }
+
+    // Aggiungi l'ultimo chunk
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+
+    return this.addOverlapToChunks(chunks, overlap);
+  }
+
+  private chunkBySentences(content: string, chunkSize: number, overlap: number): string[] {
+    // Pattern più sofisticato per identificare la fine delle frasi
+    const sentencePattern = /[.!?]+(?:\s+(?=[A-Z])|$)/g;
+    const sentences = content.split(sentencePattern).filter(s => s.trim());
+
+    const chunks: string[] = [];
+    let currentChunk = '';
+
+    for (const sentence of sentences) {
+      const trimmedSentence = sentence.trim();
+      if (!trimmedSentence) continue;
+
+      // Se la frase da sola è più grande della dimensione del chunk
+      if (trimmedSentence.length > chunkSize) {
+        // Salva il chunk corrente se non è vuoto
+        if (currentChunk.trim()) {
+          chunks.push(currentChunk.trim());
+          currentChunk = '';
+        }
+        // Spezza la frase in parole
+        const wordChunks = this.chunkByWords(trimmedSentence, chunkSize, overlap);
+        chunks.push(...wordChunks);
+      } else if ((currentChunk + ' ' + trimmedSentence).length > chunkSize) {
+        // Salva il chunk corrente e inizia uno nuovo
+        if (currentChunk.trim()) {
+          chunks.push(currentChunk.trim());
+        }
+        currentChunk = trimmedSentence;
+      } else {
+        // Aggiungi la frase al chunk corrente
+        currentChunk += currentChunk ? ' ' + trimmedSentence : trimmedSentence;
+      }
+    }
+
+    // Aggiungi l'ultimo chunk
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+
+    return this.addOverlapToChunks(chunks, overlap);
+  }
+
+  private chunkByWords(content: string, chunkSize: number, overlap: number): string[] {
+    const words = content.split(/\s+/);
+    const chunks: string[] = [];
+
+    // Calcola il numero approssimativo di parole per chunk (assumendo 5 caratteri per parola in media)
+    const wordsPerChunk = Math.floor(chunkSize / 5);
+    const overlapWords = Math.floor(overlap / 5);
+
+    for (let i = 0; i < words.length; i += wordsPerChunk - overlapWords) {
+      const chunkWords = words.slice(i, i + wordsPerChunk);
+      const chunk = chunkWords.join(' ');
+
+      if (chunk.trim()) {
+        chunks.push(chunk.trim());
+      }
+
+      // Evita loop infiniti
+      if (i + wordsPerChunk >= words.length) break;
+    }
+
+    return chunks;
+  }
+
+  private addOverlapToChunks(chunks: string[], overlapSize: number): string[] {
+    if (chunks.length <= 1 || overlapSize <= 0) return chunks;
+
+    const overlappedChunks: string[] = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+      let chunk = chunks[i];
+
+      // Aggiungi overlap con il chunk precedente
+      if (i > 0) {
+        const prevChunk = chunks[i - 1];
+        const overlapText = prevChunk.slice(-overlapSize);
+        if (overlapText.trim()) {
+          chunk = overlapText + ' ' + chunk;
         }
       }
 
-      chunks.push(chunk.trim());
-      start = Math.max(start + chunkSize - overlap, start + 1);
+      overlappedChunks.push(chunk);
     }
 
-    return chunks.filter(chunk => chunk.length > 0);
+    return overlappedChunks;
+  }
+
+  private preprocessQueryForEmbedding(query: string): string {
+    // Preprocessing specifico per query di ricerca
+    let processed = query
+      .toLowerCase() // Normalizza case per migliore matching
+      .replace(/[^\w\s\àèéìíîòóùúâêôç]/g, ' ') // Rimuovi punteggiatura ma mantieni accenti italiani
+      .replace(/\s+/g, ' ') // Normalizza spazi
+      .trim();
+
+    // Espandi contrazioni comuni in italiano
+    const contractions = {
+      "dell'": "della ",
+      "dell'": "della ",
+      "sull'": "sulla ",
+      "nell'": "nella ",
+      "all'": "alla ",
+      "c'è": "ci è",
+      "dov'è": "dove è",
+      "cos'è": "cosa è",
+      "com'è": "come è"
+    };
+
+    for (const [contraction, expansion] of Object.entries(contractions)) {
+      processed = processed.replace(new RegExp(contraction, 'gi'), expansion);
+    }
+
+    // Aggiungi sinonimi e termini correlati per migliorare il matching
+    const synonymMap = {
+      "terra": "terra pianeta mondo globo",
+      "spazio": "spazio universo cosmo",
+      "rosso": "rosso scarlatto cremisi",
+      "pulsante": "pulsante battente vibrante",
+      "ruota": "ruota gira rotate movimento"
+    };
+
+    for (const [word, synonyms] of Object.entries(synonymMap)) {
+      if (processed.includes(word)) {
+        processed += " " + synonyms;
+      }
+    }
+
+    return processed;
+  }
+
+  private preprocessChunkForEmbedding(chunk: string): string {
+    // Preprocessing per chunks di documento
+    let processed = chunk
+      .replace(/\s+/g, ' ') // Normalizza spazi
+      .replace(/[""]/g, '"') // Normalizza virgolette
+      .replace(/['']/g, "'") // Normalizza apostrofi
+      .trim();
+
+    // Mantieni case originale per chunks di documento ma pulisci caratteri problematici
+    processed = processed.replace(/[^\w\s\àèéìíîòóùúâêôç.,!?;:()\-"']/g, ' ');
+
+    // Assicurati che il chunk abbia una lunghezza minima significativa
+    if (processed.length < 20) {
+      return processed;
+    }
+
+    // Aggiungi contesto semantico se il chunk è molto corto
+    if (processed.length < 100) {
+      processed = "Contenuto del documento: " + processed;
+    }
+
+    return processed;
   }
 
   async searchSimilarContent(
@@ -231,19 +445,97 @@ export class LocalRAGService {
     }
 
     try {
+      // Preprocessing semantico della query per migliorare la qualità dell'embedding
+      const preprocessedQuery = this.preprocessQueryForEmbedding(query);
+
       // Generate embedding for query
-      const queryEmbedding = await this.ollamaService!.generateEmbedding(query);
+      const queryEmbedding = await this.ollamaService!.generateEmbedding(preprocessedQuery);
+
+      // Debug embedding generation
+      console.log('🔍 DEBUG - Query embedding:', {
+        originalQuery: query.substring(0, 50) + '...',
+        preprocessedQuery: preprocessedQuery.substring(0, 50) + '...',
+        queryLength: query.length,
+        preprocessedLength: preprocessedQuery.length,
+        embeddingLength: queryEmbedding.length,
+        embeddingPreview: queryEmbedding.slice(0, 5),
+        embeddingNorm: Math.sqrt(queryEmbedding.reduce((sum, val) => sum + val * val, 0))
+      });
 
       // Filter documents by documentId if specified
       const relevantDocs = Array.from(this.vectorStore.values()).filter(doc =>
         !documentId || doc.metadata.documentId === documentId
       );
 
-      // Calculate similarities
-      const similarities = relevantDocs.map(doc => ({
-        ...doc,
-        score: this.cosineSimilarity(queryEmbedding, doc.embedding)
-      }));
+      console.log('🔍 DEBUG - Vector store status:', {
+        totalVectors: this.vectorStore.size,
+        requestedDocumentId: documentId,
+        relevantDocsFound: relevantDocs.length,
+        vectorStoreKeys: Array.from(this.vectorStore.keys()).slice(0, 5) // Prime 5 chiavi per debug
+      });
+
+      if (relevantDocs.length === 0) {
+        throw new AppError(
+          documentId
+            ? `No document chunks found for document ID: ${documentId}. Document may not have been processed correctly.`
+            : 'No documents found in the vector store. Please upload and process a document first.',
+          404
+        );
+      }
+
+      // Calculate multiple similarity metrics for hybrid scoring
+      const similarities = relevantDocs.map(doc => {
+        let cosineScore = 0;
+        let jaccardScore = 0;
+        let semanticScore = 0;
+
+        try {
+          // Validazione embeddings
+          if (!doc.embedding || doc.embedding.length === 0 || !queryEmbedding || queryEmbedding.length === 0) {
+            console.warn('🔍 WARNING - Missing or empty embeddings:', {
+              docEmbeddingLength: doc.embedding?.length || 0,
+              queryEmbeddingLength: queryEmbedding?.length || 0,
+              docId: doc.id
+            });
+            cosineScore = 0;
+          } else {
+            cosineScore = this.cosineSimilarity(queryEmbedding, doc.embedding);
+          }
+
+          // Validazione contenuto
+          if (!doc.content || doc.content.trim().length === 0) {
+            console.warn('🔍 WARNING - Empty document content for doc:', doc.id);
+            jaccardScore = 0;
+            semanticScore = 0;
+          } else {
+            jaccardScore = this.jaccardSimilarity(query, doc.content);
+            semanticScore = this.semanticWordOverlap(query, doc.content);
+          }
+
+          // Controlli NaN/Infinity
+          cosineScore = isNaN(cosineScore) || !isFinite(cosineScore) ? 0 : cosineScore;
+          jaccardScore = isNaN(jaccardScore) || !isFinite(jaccardScore) ? 0 : jaccardScore;
+          semanticScore = isNaN(semanticScore) || !isFinite(semanticScore) ? 0 : semanticScore;
+
+        } catch (error) {
+          console.error('🔍 ERROR calculating similarities for doc:', doc.id, error.message);
+          cosineScore = jaccardScore = semanticScore = 0;
+        }
+
+        // Weighted hybrid score
+        const hybridScore = (cosineScore * 0.6) + (jaccardScore * 0.2) + (semanticScore * 0.2);
+
+        return {
+          ...doc,
+          score: hybridScore,
+          metrics: {
+            cosine: cosineScore,
+            jaccard: jaccardScore,
+            semantic: semanticScore,
+            hybrid: hybridScore
+          }
+        };
+      });
 
       // Sort by similarity and take top K
       const results = similarities
@@ -254,6 +546,21 @@ export class LocalRAGService {
           score: doc.score,
           metadata: doc.metadata
         }));
+
+      // Debug aggiuntivo per investigare il problema di similarità
+      console.log('🔍 DEBUG - Similarity search details:', {
+        query: query.substring(0, 100) + '...',
+        totalDocs: relevantDocs.length,
+        topK,
+        documentId,
+        resultsFound: results.length,
+        allScores: similarities.map(s => s.score).sort((a, b) => b - a),
+        topResults: results.map(r => ({
+          score: r.score,
+          contentPreview: r.content.substring(0, 50) + '...',
+          metrics: r.metrics
+        }))
+      });
 
       logger.debug('Similarity search completed', {
         query: query.substring(0, 100),
@@ -344,6 +651,68 @@ export class LocalRAGService {
     }
 
     return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  private jaccardSimilarity(text1: string, text2: string): number {
+    // Similarità di Jaccard basata su word sets
+    const words1 = new Set(text1.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+    const words2 = new Set(text2.toLowerCase().split(/\s+/).filter(w => w.length > 2));
+
+    const intersection = new Set([...words1].filter(word => words2.has(word)));
+    const union = new Set([...words1, ...words2]);
+
+    return union.size === 0 ? 0 : intersection.size / union.size;
+  }
+
+  private semanticWordOverlap(query: string, content: string): number {
+    // Overlap semantico che considera sinonimi e variazioni
+    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+    const contentWords = content.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+
+    // Mappa di sinonimi estesa per l'italiano
+    const synonymGroups = [
+      ['terra', 'pianeta', 'mondo', 'globo'],
+      ['spazio', 'universo', 'cosmo', 'vuoto'],
+      ['rosso', 'scarlatto', 'cremisi', 'vermiglio'],
+      ['pulsante', 'battente', 'vibrante', 'tremolante'],
+      ['ruota', 'gira', 'rotate', 'movimento', 'rotazione'],
+      ['lento', 'lenta', 'lentamente', 'gradualmente'],
+      ['grande', 'enorme', 'gigante', 'imponente'],
+      ['sfera', 'palla', 'globo', 'sferico']
+    ];
+
+    let matches = 0;
+    let totalQueryWords = queryWords.length;
+
+    for (const queryWord of queryWords) {
+      // Match diretto
+      if (contentWords.includes(queryWord)) {
+        matches++;
+        continue;
+      }
+
+      // Match con sinonimi
+      for (const group of synonymGroups) {
+        if (group.includes(queryWord)) {
+          const synonymMatch = group.some(synonym => contentWords.includes(synonym));
+          if (synonymMatch) {
+            matches += 0.8; // Peso ridotto per match sinonimico
+            break;
+          }
+        }
+      }
+
+      // Match parziale (radici delle parole)
+      if (queryWord.length > 4) {
+        const root = queryWord.slice(0, -2);
+        const partialMatch = contentWords.some(word => word.startsWith(root) || word.includes(root));
+        if (partialMatch) {
+          matches += 0.5; // Peso ridotto per match parziale
+        }
+      }
+    }
+
+    return totalQueryWords === 0 ? 0 : matches / totalQueryWords;
   }
 
   async deleteDocument(documentId: string): Promise<void> {

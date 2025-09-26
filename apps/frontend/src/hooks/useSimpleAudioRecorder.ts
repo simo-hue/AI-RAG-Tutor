@@ -131,6 +131,24 @@ export const useSimpleAudioRecorder = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const isSupported = !!SpeechRecognition && !!navigator.mediaDevices && !!window.MediaRecorder;
 
+    console.log('🔍 Controllo supporto browser:', {
+      SpeechRecognition: !!SpeechRecognition,
+      webkitSpeechRecognition: !!window.webkitSpeechRecognition,
+      mediaDevices: !!navigator.mediaDevices,
+      MediaRecorder: !!window.MediaRecorder,
+      isSupported,
+      isSecureContext: window.isSecureContext,
+      protocol: window.location.protocol,
+      userAgent: navigator.userAgent.substring(0, 100)
+    });
+
+    if (!SpeechRecognition) {
+      console.error('❌ SpeechRecognition non supportato in questo browser');
+    }
+    if (!window.isSecureContext) {
+      console.error('❌ Contesto non sicuro - serve HTTPS per SpeechRecognition');
+    }
+
     setState(prev => ({ ...prev, isSupported }));
 
     // Enumera i dispositivi audio se supportato
@@ -161,10 +179,13 @@ export const useSimpleAudioRecorder = () => {
 
       // Event handlers
       recognition.onstart = () => {
+        console.log('🎤 Riconoscimento vocale avviato');
         setState(prev => ({ ...prev, isTranscribing: true, error: null }));
       };
 
       recognition.onresult = (event) => {
+        console.log('📝 Evento riconoscimento ricevuto:', event.results.length, 'risultati');
+
         let interimTranscript = '';
         let finalTranscript = finalTranscriptRef.current;
         let confidence = 0;
@@ -172,6 +193,12 @@ export const useSimpleAudioRecorder = () => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           confidence = event.results[i][0].confidence || 0;
+
+          console.log(`Risultato ${i}:`, {
+            transcript,
+            isFinal: event.results[i].isFinal,
+            confidence
+          });
 
           if (event.results[i].isFinal) {
             finalTranscript += transcript + ' ';
@@ -182,6 +209,13 @@ export const useSimpleAudioRecorder = () => {
         }
 
         const displayTranscript = (finalTranscript + interimTranscript).trim();
+
+        console.log('📄 Trascrizione aggiornata:', {
+          final: finalTranscript,
+          interim: interimTranscript,
+          display: displayTranscript
+        });
+
         setState(prev => ({
           ...prev,
           transcription: displayTranscript,
@@ -190,22 +224,29 @@ export const useSimpleAudioRecorder = () => {
       };
 
       recognition.onerror = (event) => {
+        console.error('❌ Errore riconoscimento vocale:', event.error, event);
+
         let errorMessage = 'Errore di riconoscimento vocale';
 
         switch (event.error) {
           case 'no-speech':
+            console.log('⚠️ No speech detected');
             errorMessage = 'Nessun parlato rilevato. Prova a parlare più chiaramente.';
             break;
           case 'audio-capture':
+            console.log('⚠️ Audio capture error');
             errorMessage = 'Problema con il microfono. Controlla le impostazioni audio.';
             break;
           case 'not-allowed':
+            console.log('⚠️ Permission denied');
             errorMessage = 'Permesso microfono negato. Abilita l\'accesso al microfono.';
             break;
           case 'network':
+            console.log('⚠️ Network error');
             errorMessage = 'Errore di rete durante il riconoscimento vocale.';
             break;
           case 'aborted':
+            console.log('ℹ️ Recognition aborted by user');
             // Non mostrare errore se l'utente ha fermato volontariamente
             return;
         }
@@ -214,6 +255,7 @@ export const useSimpleAudioRecorder = () => {
       };
 
       recognition.onend = () => {
+        console.log('🔚 Riconoscimento vocale terminato');
         setState(prev => ({ ...prev, isTranscribing: false }));
       };
 
@@ -480,8 +522,96 @@ NOME ERRORE: ${error.name || 'Sconosciuto'}`;
       mediaRecorderRef.current = mediaRecorder;
 
       // Avvia il riconoscimento vocale
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
       if (recognitionRef.current) {
-        recognitionRef.current.start();
+        console.log('🚀 Avvio riconoscimento vocale esistente...');
+        try {
+          recognitionRef.current.start();
+          console.log('✅ Riconoscimento vocale avviato con successo');
+        } catch (recognitionError) {
+          console.error('❌ Errore avvio riconoscimento vocale:', recognitionError);
+        }
+      } else if (SpeechRecognition) {
+        console.log('🔧 Creazione nuovo riconoscimento vocale durante registrazione...');
+
+        // Crea e configura il riconoscimento vocale ora
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'it-IT';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        // Event handlers
+        recognition.onstart = () => {
+          console.log('🎤 Riconoscimento vocale avviato (creato runtime)');
+          setState(prev => ({ ...prev, isTranscribing: true, error: null }));
+        };
+
+        recognition.onresult = (event) => {
+          console.log('📝 Evento riconoscimento ricevuto (runtime):', event.results.length, 'risultati');
+
+          let interimTranscript = '';
+          let finalTranscript = finalTranscriptRef.current;
+          let confidence = 0;
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            confidence = event.results[i][0].confidence || 0;
+
+            console.log(`Risultato ${i} (runtime):`, {
+              transcript,
+              isFinal: event.results[i].isFinal,
+              confidence
+            });
+
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+              finalTranscriptRef.current = finalTranscript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          const displayTranscript = (finalTranscript + interimTranscript).trim();
+
+          console.log('📄 Trascrizione aggiornata (runtime):', {
+            final: finalTranscript,
+            interim: interimTranscript,
+            display: displayTranscript
+          });
+
+          setState(prev => ({
+            ...prev,
+            transcription: displayTranscript,
+            confidence: Math.round(confidence * 100)
+          }));
+        };
+
+        recognition.onerror = (event) => {
+          console.error('❌ Errore riconoscimento vocale (runtime):', event.error, event);
+
+          if (event.error !== 'aborted') {
+            let errorMessage = `Errore riconoscimento vocale: ${event.error}`;
+            setState(prev => ({ ...prev, error: errorMessage, isTranscribing: false }));
+          }
+        };
+
+        recognition.onend = () => {
+          console.log('🔚 Riconoscimento vocale terminato (runtime)');
+          setState(prev => ({ ...prev, isTranscribing: false }));
+        };
+
+        recognitionRef.current = recognition;
+
+        try {
+          recognition.start();
+          console.log('✅ Riconoscimento vocale runtime avviato con successo');
+        } catch (recognitionError) {
+          console.error('❌ Errore avvio riconoscimento vocale runtime:', recognitionError);
+        }
+      } else {
+        console.warn('⚠️ SpeechRecognition non supportato - riconoscimento vocale non disponibile');
       }
 
       // Timer per la durata

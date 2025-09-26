@@ -48,14 +48,34 @@ export class OllamaManager {
       interface OllamaModel { name: string; }
       const installedModels = response.data.models?.map((model: OllamaModel) => model.name) || [];
       const requiredModels = [config.ollama.model, config.ollama.embeddingModel];
-      const missing = requiredModels.filter(model =>
-        !installedModels.some((installed: string) => installed.startsWith(model))
-      );
 
-      return {
+      logger.debug('Checking model availability', {
+        installed: installedModels,
+        required: requiredModels
+      });
+
+      const missing = requiredModels.filter(model => {
+        // Check if any installed model starts with the required model name
+        // e.g., "llama3:latest" matches "llama3"
+        const isAvailable = installedModels.some((installed: string) =>
+          installed.startsWith(model) ||
+          model.startsWith(installed.split(':')[0])
+        );
+
+        if (!isAvailable) {
+          logger.debug(`Model ${model} not found in installed models`);
+        }
+
+        return !isAvailable;
+      });
+
+      const result = {
         available: missing.length === 0,
         missing
       };
+
+      logger.debug('Model availability check result', result);
+      return result;
     } catch (error) {
       logger.warn('Failed to check available models', { error: error.message });
       return { available: false, missing: [config.ollama.model, config.ollama.embeddingModel] };
@@ -306,29 +326,40 @@ export class OllamaManager {
 
     while (retries < this.maxRetries) {
       // Check if already running
-      if (await this.isOllamaRunning()) {
-        logger.debug('Ollama is already running');
+      const isRunning = await this.isOllamaRunning();
+      logger.debug(`Ollama running check: ${isRunning}`);
+
+      if (isRunning) {
+        logger.info('Ollama is already running, checking models...');
 
         // Check if models are available
-        const { available } = await this.areModelsAvailable();
+        const { available, missing } = await this.areModelsAvailable();
+        logger.debug('Model availability check:', { available, missing });
+
         if (available) {
+          logger.info('Ollama is ready with all required models');
           return true;
         } else {
-          logger.info('Ollama is running but models are missing, installing...');
+          logger.info('Ollama is running but some models are missing', { missing });
           try {
             await this.ensureModelsInstalled();
+            logger.info('Missing models installed successfully');
             return true;
           } catch (error) {
-            logger.error('Failed to install models', { error: error.message });
+            logger.error('Failed to install missing models', { error: error.message });
+            // Continue to attempt restart if model installation fails
           }
         }
-      }
+      } else {
+        logger.info(`Ollama is not running. Attempting to start (attempt ${retries + 1}/${this.maxRetries})`);
 
-      logger.info(`Attempting to start Ollama (attempt ${retries + 1}/${this.maxRetries})`);
+        const success = await this.startOllama();
+        if (success) {
+          logger.info('Ollama started successfully');
+          return true;
+        }
 
-      const success = await this.startOllama();
-      if (success) {
-        return true;
+        logger.warn(`Failed to start Ollama (attempt ${retries + 1})`);
       }
 
       retries++;
@@ -338,7 +369,7 @@ export class OllamaManager {
       }
     }
 
-    logger.error('Failed to start Ollama after maximum retries');
+    logger.error('Failed to ensure Ollama is running after maximum retries');
     return false;
   }
 
@@ -365,7 +396,7 @@ export class OllamaManager {
       ]);
 
       const tagsResponse = await axios.get(`${config.ollama.host}/api/tags`, { timeout: 3000 });
-      const models = tagsResponse.data.models?.map((model: OllamaModel) => model.name) || [];
+      const models = tagsResponse.data.models?.map((model: { name: string }) => model.name) || [];
 
       return {
         running: true,

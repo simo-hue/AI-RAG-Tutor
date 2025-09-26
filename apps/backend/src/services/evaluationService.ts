@@ -48,15 +48,83 @@ export class EvaluationServiceManager {
         maxChunks
       );
 
-      // Verifica qualità del contesto
-      const minSimilarity = options?.minSimilarityScore || 0.1;
+      // Debug: Log delle similarità per investigare il problema
+      console.log('🔍 DEBUG - Similarity scores:', {
+        transcription: transcription.substring(0, 100) + '...',
+        documentId,
+        chunks: contextResult.relevantChunks.map(chunk => ({
+          score: chunk.score,
+          contentPreview: chunk.content.substring(0, 100) + '...'
+        })),
+        totalScore: contextResult.totalScore,
+        averageScore: contextResult.totalScore / contextResult.relevantChunks.length
+      });
+
+      // Validazione dei risultati prima di calcolare le statistiche
+      if (!contextResult.relevantChunks || contextResult.relevantChunks.length === 0) {
+        throw new AppError(
+          'No content chunks found in document. The document may be empty or processing failed.',
+          400
+        );
+      }
+
+      // Calcola soglia adattiva basata su statistiche del contenuto
+      const scores = contextResult.relevantChunks.map(chunk => chunk.score).filter(score => !isNaN(score) && isFinite(score));
+
+      if (scores.length === 0) {
+        throw new AppError(
+          'No valid similarity scores computed. There may be an issue with the embedding generation or document processing.',
+          500
+        );
+      }
+
+      const averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+      const maxScore = Math.max(...scores);
+      const minScore = Math.min(...scores);
+      const scoreStdDev = Math.sqrt(scores.reduce((sum, score) => sum + Math.pow(score - averageScore, 2), 0) / scores.length);
+
+      // Soglia adattiva: prende in considerazione la distribuzione dei punteggi
+      let adaptiveThreshold = options?.minSimilarityScore;
+      if (!adaptiveThreshold) {
+        if (maxScore < 0.1) {
+          // Se tutti i punteggi sono bassi, usa una soglia molto bassa
+          adaptiveThreshold = Math.max(0.02, averageScore * 0.3);
+        } else if (scoreStdDev < 0.05) {
+          // Se i punteggi sono simili, usa la media meno una deviazione standard
+          adaptiveThreshold = Math.max(0.03, averageScore - scoreStdDev);
+        } else {
+          // Usa una percentuale della media, mai sotto 0.03
+          adaptiveThreshold = Math.max(0.03, averageScore * 0.6);
+        }
+      }
+
+      console.log('🔍 DEBUG - Adaptive threshold calculation:', {
+        originalChunks: contextResult.relevantChunks.length,
+        averageScore: averageScore.toFixed(3),
+        maxScore: maxScore.toFixed(3),
+        minScore: minScore.toFixed(3),
+        scoreStdDev: scoreStdDev.toFixed(3),
+        adaptiveThreshold: adaptiveThreshold.toFixed(3),
+        strategy: maxScore < 0.1 ? 'low-scores' : scoreStdDev < 0.05 ? 'similar-scores' : 'normal'
+      });
+
       const relevantChunks = contextResult.relevantChunks.filter(
-        chunk => chunk.score >= minSimilarity
+        chunk => chunk.score >= adaptiveThreshold
       );
 
+      console.log('🔍 DEBUG - After adaptive filtering:', {
+        originalChunks: contextResult.relevantChunks.length,
+        filteredChunks: relevantChunks.length,
+        adaptiveThreshold: adaptiveThreshold.toFixed(3),
+        rejected: contextResult.relevantChunks.filter(chunk => chunk.score < adaptiveThreshold).length
+      });
+
       if (relevantChunks.length === 0) {
+        // Aggiungi più dettagli nell'errore per debug
+        const scores = contextResult.relevantChunks.map(c => c.score);
+        const maxScore = Math.max(...scores);
         throw new AppError(
-          'No relevant content found in document for this transcription. The speech may not be related to the uploaded document.',
+          `No relevant content found in document for this transcription. Max similarity score: ${maxScore.toFixed(3)}, adaptive threshold: ${adaptiveThreshold.toFixed(3)}. The speech may not be related to the uploaded document.`,
           400
         );
       }

@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Settings,
   ChevronDown,
+  MessageSquare,
 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Badge, Progress } from '@/components/ui';
 import { useSimpleAudioRecorder, AudioDevice } from '@/hooks/useSimpleAudioRecorder';
@@ -22,6 +23,7 @@ import { cn } from '@/utils/cn';
 interface SimpleAudioRecorderProps {
   onRecordingComplete?: (audioBlob: Blob, duration: number) => void;
   onTranscriptionComplete?: (transcription: string) => void;
+  onFeedbackRequest?: () => void;
   maxDuration?: number; // in seconds
   className?: string;
   autoTranscribe?: boolean;
@@ -30,6 +32,7 @@ interface SimpleAudioRecorderProps {
 export const SimpleAudioRecorder = ({
   onRecordingComplete,
   onTranscriptionComplete,
+  onFeedbackRequest,
   maxDuration = 600, // 10 minutes default
   className,
   autoTranscribe = true
@@ -54,6 +57,55 @@ export const SimpleAudioRecorder = ({
     selectAudioDevice,
     enumerateAudioDevices,
   } = useSimpleAudioRecorder();
+
+  // Test riconoscimento vocale separato
+  const testSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('❌ SpeechRecognition non supportato in questo browser');
+      return;
+    }
+
+    console.log('🧪 Test riconoscimento vocale...');
+
+    const testRecognition = new SpeechRecognition();
+    testRecognition.lang = 'it-IT';
+    testRecognition.continuous = false;
+    testRecognition.interimResults = true;
+
+    testRecognition.onstart = () => {
+      console.log('✅ Test riconoscimento avviato');
+      alert('✅ Test riconoscimento avviato - parla ora per 3 secondi');
+    };
+
+    testRecognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      console.log('✅ Test trascrizione ricevuta:', transcript);
+      alert(`✅ Test riuscito! Trascrizione: "${transcript}"`);
+    };
+
+    testRecognition.onerror = (event) => {
+      console.error('❌ Test fallito:', event.error);
+      alert(`❌ Test fallito: ${event.error}`);
+    };
+
+    testRecognition.onend = () => {
+      console.log('🔚 Test terminato');
+    };
+
+    try {
+      testRecognition.start();
+
+      // Stop automatico dopo 3 secondi
+      setTimeout(() => {
+        testRecognition.stop();
+      }, 3000);
+    } catch (error) {
+      console.error('❌ Errore avvio test:', error);
+      alert(`❌ Errore avvio test: ${error}`);
+    }
+  };
 
   // Test microfono separato con fallback multipli
   const testMicrophone = async () => {
@@ -323,17 +375,28 @@ export const SimpleAudioRecorder = ({
                   <Mic className="w-5 h-5" />
                   <span>Inizia Registrazione</span>
                 </Button>
-                {/* Pulsante test sempre disponibile */}
+                {/* Pulsanti test sempre disponibili */}
                 {!error && (
-                  <Button
-                    onClick={testMicrophone}
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    <Settings className="w-3 h-3 mr-1" />
-                    Test
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={testMicrophone}
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs"
+                    >
+                      <Settings className="w-3 h-3 mr-1" />
+                      Test Mic
+                    </Button>
+                    <Button
+                      onClick={testSpeechRecognition}
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-blue-600"
+                    >
+                      <Volume2 className="w-3 h-3 mr-1" />
+                      Test Voce
+                    </Button>
+                  </div>
                 )}
               </>
             ) : (
@@ -363,17 +426,41 @@ export const SimpleAudioRecorder = ({
                 >
                   <Square className="w-5 h-5" />
                 </Button>
+                {onFeedbackRequest && transcription && (
+                  <Button
+                    onClick={onFeedbackRequest}
+                    variant="outline"
+                    size="lg"
+                    className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                  >
+                    <MessageSquare className="w-5 h-5 mr-2" />
+                    Feedback
+                  </Button>
+                )}
               </>
             )}
 
             {(audioBlob || transcription) && (
-              <Button
-                onClick={clearRecording}
-                variant="outline"
-                size="lg"
-              >
-                <RotateCcw className="w-5 h-5" />
-              </Button>
+              <>
+                <Button
+                  onClick={clearRecording}
+                  variant="outline"
+                  size="lg"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                </Button>
+                {onFeedbackRequest && (
+                  <Button
+                    onClick={onFeedbackRequest}
+                    variant="outline"
+                    size="lg"
+                    className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                  >
+                    <MessageSquare className="w-5 h-5 mr-2" />
+                    Feedback
+                  </Button>
+                )}
+              </>
             )}
           </div>
 
@@ -406,46 +493,114 @@ export const SimpleAudioRecorder = ({
             </div>
           )}
 
-          {/* Transcription Display - Show during and after recording */}
+          {/* Real-time Transcription Display - Enhanced */}
           {(transcription || isRecording) && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-secondary-800 flex items-center space-x-2">
-                  <span>Trascrizione in tempo reale</span>
+                  <span>🎤 Trascrizione in tempo reale</span>
                   {isRecording && (
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-red-600 font-medium">LIVE</span>
+                    </div>
                   )}
                 </h4>
                 {confidence > 0 && (
                   <div className="flex items-center space-x-1">
                     <Volume2 className="w-3 h-3 text-secondary-500" />
                     <span className="text-xs text-secondary-500">
-                      {confidence}% fiducia
+                      {confidence}% accuratezza
                     </span>
                   </div>
                 )}
               </div>
-              <div className="p-4 bg-info-50 border border-info-200 rounded-lg min-h-[80px]">
-                <p className="text-sm text-info-800 leading-relaxed">
-                  {transcription || (isRecording ? 'In attesa di parlato... Inizia a parlare in italiano.' : 'Nessuna trascrizione disponibile')}
-                </p>
-                {(isTranscribing || isRecording) && (
-                  <div className="flex items-center space-x-2 mt-3">
-                    <div className="w-2 h-2 bg-info-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-info-600">
-                      {isTranscribing ? 'Elaborazione audio in corso...' : 'In ascolto...'}
-                    </span>
+
+              {/* Enhanced transcription box with better visual feedback */}
+              <div className={cn(
+                "p-4 rounded-lg min-h-[100px] transition-all duration-300",
+                isRecording && transcription
+                  ? "bg-green-50 border-2 border-green-200 shadow-md"
+                  : isRecording
+                  ? "bg-blue-50 border-2 border-blue-200 border-dashed"
+                  : "bg-info-50 border border-info-200"
+              )}>
+                <div className="space-y-3">
+                  {/* Transcription text with better formatting */}
+                  <div className="text-sm leading-relaxed">
+                    {transcription ? (
+                      <p className={cn(
+                        "transition-all duration-200",
+                        isRecording ? "text-green-800 font-medium" : "text-info-800"
+                      )}>
+                        {transcription}
+                        {isRecording && (
+                          <span className="inline-block w-1 h-4 bg-green-600 ml-1 animate-pulse"></span>
+                        )}
+                      </p>
+                    ) : isRecording ? (
+                      <p className="text-blue-700 italic">
+                        🎯 In attesa di parlato... Inizia a parlare chiaramente in italiano.
+                      </p>
+                    ) : (
+                      <p className="text-info-600 italic">
+                        Nessuna trascrizione disponibile
+                      </p>
+                    )}
                   </div>
-                )}
-                {transcription && !isRecording && (
-                  <div className="flex items-center space-x-2 mt-3">
-                    <div className="w-2 h-2 bg-success-500 rounded-full"></div>
-                    <span className="text-xs text-success-600">
-                      Trascrizione completata • {transcription.split(' ').length} parole
-                    </span>
+
+                  {/* Status indicators */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      {(isTranscribing || isRecording) && (
+                        <div className="flex items-center space-x-2">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full animate-pulse",
+                            isRecording && transcription ? "bg-green-500" : "bg-blue-500"
+                          )}></div>
+                          <span className={cn(
+                            "text-xs font-medium",
+                            isRecording && transcription ? "text-green-600" : "text-blue-600"
+                          )}>
+                            {isTranscribing ? '🔄 Elaborazione audio...' : '👂 In ascolto...'}
+                          </span>
+                        </div>
+                      )}
+
+                      {transcription && !isRecording && (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-success-500 rounded-full"></div>
+                          <span className="text-xs text-success-600 font-medium">
+                            ✅ Trascrizione completata • {transcription.split(' ').length} parole
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Word count during recording */}
+                    {isRecording && transcription && (
+                      <div className="text-xs text-green-600 font-medium">
+                        {transcription.split(' ').length} parole
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
+
+              {/* Tips for better transcription during recording */}
+              {isRecording && !transcription && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Volume2 className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">Suggerimenti per una migliore trascrizione:</span>
+                  </div>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    <li>• Parla a voce chiara e con un ritmo normale</li>
+                    <li>• Mantieni il microfono a circa 20-30cm di distanza</li>
+                    <li>• Evita rumori di fondo e interruzioni</li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

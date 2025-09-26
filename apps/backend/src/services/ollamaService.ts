@@ -47,9 +47,20 @@ export class OllamaService {
       const availableModels = models.models.map(m => m.name);
 
       const requiredModels = [ragConfig.llm.model, ragConfig.llm.embeddingModel];
-      const missingModels = requiredModels.filter(model =>
-        !availableModels.some(available => available.includes(model))
-      );
+      const missingModels = requiredModels.filter(model => {
+        // Check if any available model matches the required model
+        // e.g., "llama3:latest" matches "llama3"
+        const isAvailable = availableModels.some(available =>
+          available.startsWith(model) ||
+          model.startsWith(available.split(':')[0])
+        );
+
+        if (!isAvailable) {
+          logger.debug(`Model ${model} not found in available models:`, availableModels);
+        }
+
+        return !isAvailable;
+      });
 
       if (missingModels.length > 0) {
         logger.warn('Some required models are not available', {
