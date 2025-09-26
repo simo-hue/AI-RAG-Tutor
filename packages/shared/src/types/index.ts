@@ -4,6 +4,8 @@ export interface Document {
   content: string;
   type: 'pdf' | 'docx' | 'txt';
   uploadedAt: Date;
+  wordCount?: number;
+  chunkCount?: number;
   chunks?: DocumentChunk[];
 }
 

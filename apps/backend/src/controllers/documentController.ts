@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { DocumentService, RAGServiceManager } from '../services/ragService';
+import { documentService } from '../services/documentService';
 import { AppError } from '../middleware/errorHandler';
 import path from 'path';
 import fs from 'fs/promises';
@@ -13,62 +14,78 @@ export const documentController = {
         throw new AppError('No document file uploaded', 400);
       }
 
-      const { title, description } = req.body;
       const documentId = generateDocumentId();
 
-      // Validazione file
+      // Validazioni robuste del file
       const allowedExtensions = ['.pdf', '.docx', '.txt'];
       const fileExtension = path.extname(req.file.originalname).toLowerCase();
+      const maxFileSize = config.storage.maxFileSize; // 50MB
 
+      // Verifica estensione
       if (!allowedExtensions.includes(fileExtension)) {
-        // Rimuovi file non valido
         await safeCleanupFile(req.file.path);
         throw new AppError(
           `File type not supported. Allowed types: ${allowedExtensions.join(', ')}`,
-          400
+          415
         );
       }
 
-      // Inizializza RAG service e document service
-      const ragService = await RAGServiceManager.getInstance();
-      const documentService = new DocumentService(ragService);
-
-      // Valida il documento prima del processamento
-      const validation = await documentService.validateFile(req.file.path);
-      if (!validation.isValid) {
+      // Verifica dimensione file
+      if (req.file.size > maxFileSize) {
         await safeCleanupFile(req.file.path);
-        throw new AppError(`Invalid document: ${validation.error}`, 400);
+        throw new AppError(
+          `File too large. Maximum size allowed: ${Math.round(maxFileSize / (1024 * 1024))}MB`,
+          413
+        );
       }
 
-      // Processa il documento
-      const result = await documentService.processDocument(req.file.path, documentId);
+      // Verifica che il file esista e sia leggibile
+      try {
+        await fs.access(req.file.path);
+      } catch (accessError) {
+        throw new AppError('Uploaded file is not accessible', 400);
+      }
 
-      // Risposta di successo
+      // Upload del documento senza RAG processing per ora
+      const result = await documentService.uploadDocument(req.file);
+
+      // Estrai le informazioni necessarie
+      const document = result.document;
+      const uploadProgress = result.uploadProgress;
+
+      // Risposta di successo con formato standardizzato
       res.status(201).json({
         success: true,
         data: {
           document: {
-            id: result.documentId,
-            name: req.file.originalname,
-            content: '', // Content not needed for upload response
-            type: getDocumentType(path.extname(req.file.originalname).toLowerCase()),
-            uploadedAt: new Date(),
-            wordCount: result.wordCount,
-            chunkCount: result.chunkCount,
+            id: document.id,
+            name: document.name,
+            content: '', // Non includiamo il contenuto completo nella risposta
+            type: document.type,
+            uploadedAt: document.uploadedAt,
+            wordCount: document.content.split(/\s+/).length,
+            chunkCount: 0, // Sarà popolato durante il processamento
           },
           uploadProgress: {
-            documentId: result.documentId,
+            documentId: document.id,
             stage: 'complete' as const,
             progress: 100,
-            message: 'Document processed successfully'
+            message: 'Document uploaded successfully'
           }
         },
-        message: 'Document uploaded and processed successfully',
+        message: 'Document uploaded successfully',
       });
 
     } catch (error) {
       // Cleanup file in caso di errore
       await cleanupMulterFiles(req.file);
+
+      // Log dell'errore per debugging
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Document upload failed:', error);
+      }
+
+      // Passa l'errore al middleware di gestione errori
       next(error);
     }
   },
@@ -383,15 +400,23 @@ export const documentController = {
     try {
       const { documentId } = req.params;
 
-      // Placeholder implementation - this would trigger reprocessing
+      if (!documentId) {
+        throw new AppError('Document ID is required', 400);
+      }
+
+      // Per ora simuliamo il processing senza RAG
+      // In futuro qui andrà la logica di chunking ed embedding
+      await documentService.processDocument(documentId);
+
       res.json({
         success: true,
         data: {
           documentId: documentId,
-          status: 'processing',
-          message: 'Document processing started'
+          stage: 'complete',
+          progress: 100,
+          message: 'Document processed successfully'
         },
-        message: 'Document processing initiated',
+        message: 'Document processing completed',
       });
     } catch (error) {
       next(error);

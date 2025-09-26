@@ -162,12 +162,12 @@ export const SimpleAudioRecorder = ({
     }
   }, [audioBlob, isRecording, duration, onRecordingComplete]);
 
-  // Callback per trascrizione completata
+  // Callback per trascrizione completata - quando la registrazione si ferma
   useEffect(() => {
-    if (transcription && !isRecording && onTranscriptionComplete) {
+    if (transcription && !isRecording && !isTranscribing && onTranscriptionComplete) {
       onTranscriptionComplete(transcription);
     }
-  }, [transcription, isRecording, onTranscriptionComplete]);
+  }, [transcription, isRecording, isTranscribing, onTranscriptionComplete]);
 
   // Status del recording
   const getRecordingStatus = () => {
@@ -406,12 +406,15 @@ export const SimpleAudioRecorder = ({
             </div>
           )}
 
-          {/* Transcription Display */}
-          {transcription && (
+          {/* Transcription Display - Show during and after recording */}
+          {(transcription || isRecording) && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold text-secondary-800">
-                  Trascrizione in tempo reale:
+                <h4 className="text-sm font-semibold text-secondary-800 flex items-center space-x-2">
+                  <span>Trascrizione in tempo reale</span>
+                  {isRecording && (
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  )}
                 </h4>
                 {confidence > 0 && (
                   <div className="flex items-center space-x-1">
@@ -422,14 +425,24 @@ export const SimpleAudioRecorder = ({
                   </div>
                 )}
               </div>
-              <div className="p-4 bg-info-50 border border-info-200 rounded-lg">
+              <div className="p-4 bg-info-50 border border-info-200 rounded-lg min-h-[80px]">
                 <p className="text-sm text-info-800 leading-relaxed">
-                  {transcription || 'In attesa di parlato...'}
+                  {transcription || (isRecording ? 'In attesa di parlato... Inizia a parlare in italiano.' : 'Nessuna trascrizione disponibile')}
                 </p>
-                {isTranscribing && (
-                  <div className="flex items-center space-x-2 mt-2">
+                {(isTranscribing || isRecording) && (
+                  <div className="flex items-center space-x-2 mt-3">
                     <div className="w-2 h-2 bg-info-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-info-600">In ascolto...</span>
+                    <span className="text-xs text-info-600">
+                      {isTranscribing ? 'Elaborazione audio in corso...' : 'In ascolto...'}
+                    </span>
+                  </div>
+                )}
+                {transcription && !isRecording && (
+                  <div className="flex items-center space-x-2 mt-3">
+                    <div className="w-2 h-2 bg-success-500 rounded-full"></div>
+                    <span className="text-xs text-success-600">
+                      Trascrizione completata • {transcription.split(' ').length} parole
+                    </span>
                   </div>
                 )}
               </div>
@@ -438,16 +451,32 @@ export const SimpleAudioRecorder = ({
 
           {/* Success State */}
           {audioBlob && !isRecording && transcription && (
-            <div className="flex items-center space-x-2 p-3 bg-success-50 border border-success-200 rounded-lg">
-              <CheckCircle2 className="w-5 h-5 text-success-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-success-800">
-                  Registrazione completata!
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 p-4 bg-success-50 border border-success-200 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-success-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-success-800 mb-1">
+                    🎉 Registrazione completata con successo!
+                  </p>
+                  <p className="text-xs text-success-600">
+                    Durata: {formatDuration(duration)} • Parole riconosciute: {transcription.split(' ').length}
+                  </p>
+                  <p className="text-xs text-success-700 mt-1">
+                    ✅ Trascrizione pronta per la valutazione
+                  </p>
+                </div>
+              </div>
+
+              {/* Instructions for next step */}
+              <div className="p-3 bg-info-50 border border-info-200 rounded-lg">
+                <p className="text-sm text-info-800 font-medium mb-1">
+                  📋 Prossimo passo:
                 </p>
-                <p className="text-xs text-success-600">
-                  Durata: {formatDuration(duration)} • Parole: {transcription.split(' ').length}
+                <p className="text-xs text-info-700">
+                  Clicca il pulsante "Inizia Valutazione" qui sotto per procedere all'analisi della tua presentazione.
                 </p>
               </div>
+
             </div>
           )}
 

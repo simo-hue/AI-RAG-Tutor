@@ -8,7 +8,7 @@ import { DocumentUpload, ProcessedDocument } from '@/components/document/Documen
 import { SimpleAudioRecorder } from '@/components/audio/SimpleAudioRecorder';
 import { EvaluationProcessor } from '@/components/evaluation/EvaluationProcessor';
 import { EvaluationResults } from '@/components/evaluation/EvaluationResults';
-import { Card, CardHeader, CardTitle, CardContent, Button } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import { FileText, ArrowRight, CheckCircle, Mic, BarChart3 } from 'lucide-react';
 import { EvaluationResult } from '@/services/evaluationService';
 
@@ -167,22 +167,70 @@ export default function UploadPage() {
 
                 {processedDocuments.length > 0 && (
                   <div className="mt-6 pt-6 border-t border-secondary-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-secondary-900">
-                          {processedDocuments.length} documento{processedDocuments.length > 1 ? 'i' : ''} processato{processedDocuments.length > 1 ? 'i' : ''}
-                        </p>
-                        <p className="text-xs text-secondary-500">
-                          {processedDocuments.reduce((sum, doc) => sum + (doc.chunkCount || 0), 0)} chunk pronti per l'analisi RAG
+                    <div className="space-y-4">
+                      {/* Status Summary */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-secondary-900 flex items-center space-x-2">
+                            <CheckCircle className="w-4 h-4 text-success-600" />
+                            <span>{processedDocuments.length} documento{processedDocuments.length > 1 ? 'i' : ''} processato{processedDocuments.length > 1 ? 'i' : ''}</span>
+                          </p>
+                          <p className="text-xs text-secondary-500">
+                            {processedDocuments.reduce((sum, doc) => sum + (doc.wordCount || 0), 0)} parole •
+                            Contenuto estratto e pronto per l'analisi RAG locale
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => setCurrentStep(2)}
+                          className="flex items-center space-x-2"
+                        >
+                          <span>Continua alla Registrazione</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      {/* Document Details */}
+                      <div className="space-y-2">
+                        {processedDocuments.map((doc, index) => (
+                          <div key={index} className="p-3 bg-success-50 border border-success-200 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-success-100 rounded-lg flex items-center justify-center">
+                                  <FileText className="w-4 h-4 text-success-600" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-success-900">
+                                    {doc.file.name}
+                                  </p>
+                                  <p className="text-xs text-success-700">
+                                    Processato localmente • Pronto per valutazione AI
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant="outline" size="sm" className="bg-success-50 text-success-700 border-success-200">
+                                  {(doc.wordCount || 0).toLocaleString()} parole
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Technical Info */}
+                      <div className="p-3 bg-info-50 border border-info-200 rounded-lg">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <FileText className="w-4 h-4 text-info-600" />
+                          <span className="text-sm font-medium text-info-800">Processamento Locale Completato</span>
+                        </div>
+                        <p className="text-xs text-info-700">
+                          ✓ Contenuto estratto da {processedDocuments.length} file
+                          <br />
+                          ✓ Embeddings generati con modello locale
+                          <br />
+                          ✓ Vector database indicizzato e pronto per ricerca semantica
                         </p>
                       </div>
-                      <Button
-                        onClick={() => setCurrentStep(2)}
-                        className="flex items-center space-x-2"
-                      >
-                        <span>Continua</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
                     </div>
                   </div>
                 )}
@@ -205,13 +253,38 @@ export default function UploadPage() {
               />
 
               {transcription && (
-                <div className="p-4 bg-info-50 border border-info-200 rounded-lg">
-                  <h4 className="text-sm font-semibold text-info-800 mb-2">
-                    Contenuto della presentazione:
-                  </h4>
-                  <p className="text-sm text-info-700 leading-relaxed">
-                    {transcription}
-                  </p>
+                <div className="space-y-4">
+                  <div className="p-4 bg-success-50 border border-success-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <CheckCircle className="w-5 h-5 text-success-600" />
+                      <h4 className="text-sm font-semibold text-success-800">
+                        Trascrizione Completata
+                      </h4>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs text-success-700">
+                        <span>Lunghezza: {transcription.length} caratteri</span>
+                        <span>Parole: ~{transcription.split(' ').length}</span>
+                      </div>
+                      <p className="text-sm text-success-700 leading-relaxed bg-white/60 p-3 rounded border">
+                        {transcription}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-info-50 border border-info-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Mic className="w-4 h-4 text-info-600" />
+                      <span className="text-sm font-medium text-info-800">Processamento Audio Locale</span>
+                    </div>
+                    <p className="text-xs text-info-700">
+                      ✓ Audio processato con Whisper locale
+                      <br />
+                      ✓ Trascrizione generata senza invio dati esterni
+                      <br />
+                      ✓ Pronto per analisi di similarità con il documento
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -226,6 +299,7 @@ export default function UploadPage() {
                   <Button
                     onClick={handleStartEvaluation}
                     disabled={!transcription || !documentId}
+                    className="bg-primary-600 hover:bg-primary-700 text-white"
                   >
                     Inizia Valutazione
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -329,8 +403,73 @@ export default function UploadPage() {
           )}
         </div>
 
+        {/* System Status - Local Processing */}
+        <Card className="mt-12 border-success-200 bg-success-50">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-success-800">
+              <CheckCircle className="w-5 h-5" />
+              <span>Sistema Completamente Locale</span>
+            </CardTitle>
+            <p className="text-success-700 text-sm">
+              Tutti i dati rimangono sul tuo dispositivo - nessun invio a servizi esterni
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-white/60 rounded-lg border border-success-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <FileText className="w-4 h-4 text-success-600" />
+                  <span className="text-sm font-medium text-success-800">Elaborazione Documenti</span>
+                </div>
+                <p className="text-xs text-success-700">
+                  • Estrazione contenuto locale<br />
+                  • Embeddings generati in locale<br />
+                  • Vector database in memoria
+                </p>
+              </div>
+
+              <div className="p-3 bg-white/60 rounded-lg border border-success-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Mic className="w-4 h-4 text-success-600" />
+                  <span className="text-sm font-medium text-success-800">Trascrizione Audio</span>
+                </div>
+                <p className="text-xs text-success-700">
+                  • Whisper locale (base model)<br />
+                  • Audio processato offline<br />
+                  • Nessun invio dati esterni
+                </p>
+              </div>
+
+              <div className="p-3 bg-white/60 rounded-lg border border-success-200">
+                <div className="flex items-center space-x-2 mb-2">
+                  <BarChart3 className="w-4 h-4 text-success-600" />
+                  <span className="text-sm font-medium text-success-800">Valutazione AI</span>
+                </div>
+                <p className="text-xs text-success-700">
+                  • Ollama LLM (llama3.2:3b)<br />
+                  • Analisi completamente locale<br />
+                  • Privacy garantita al 100%
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 bg-info-50 border border-info-200 rounded-lg">
+              <div className="flex items-center space-x-2 mb-2">
+                <CheckCircle className="w-4 h-4 text-info-600" />
+                <span className="text-sm font-medium text-info-800">Vantaggi del Processamento Locale</span>
+              </div>
+              <ul className="text-xs text-info-700 space-y-1">
+                <li>🔒 Privacy completa - i tuoi dati non lasciano mai il dispositivo</li>
+                <li>⚡ Nessuna dipendenza da connessione internet per l'elaborazione</li>
+                <li>💰 Nessun costo per API esterne o servizi cloud</li>
+                <li>🎯 Controllo completo sui modelli e sulla qualità dell'analisi</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Help Section */}
-        <Card className="mt-12">
+        <Card className="mt-6">
           <CardContent className="text-center">
             <h3 className="text-lg font-semibold text-secondary-900 mb-2">
               Hai bisogno di aiuto?

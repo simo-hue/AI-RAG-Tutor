@@ -2,6 +2,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Document, UploadProgress } from '@ai-speech-evaluator/shared';
 import { AppError } from '../middleware/errorHandler';
+import * as pdfParse from 'pdf-parse';
+import * as mammoth from 'mammoth';
 
 // Temporary in-memory storage (replace with database in production)
 const documents: Document[] = [];
@@ -10,8 +12,8 @@ const uploadProgresses: Record<string, UploadProgress> = {};
 export const documentService = {
   async uploadDocument(file: Express.Multer.File) {
     try {
-      // Read file content
-      const content = await fs.readFile(file.path, 'utf-8');
+      // Extract content based on file type
+      const content = await extractContent(file);
 
       // Create document object
       const document: Document = {
@@ -100,7 +102,54 @@ export const documentService = {
 };
 
 function generateId(): string {
-  return Math.random().toString(36).substr(2, 9);
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 9);
+  return `doc_${timestamp}_${random}`;
+}
+
+async function extractContent(file: Express.Multer.File): Promise<string> {
+  const fileType = getFileType(file.mimetype);
+
+  try {
+    let content = '';
+
+    switch (fileType) {
+      case 'pdf':
+        const pdfBuffer = await fs.readFile(file.path);
+        const pdfData = await pdfParse(pdfBuffer);
+        content = pdfData.text;
+        break;
+
+      case 'docx':
+        const docxResult = await mammoth.extractRawText({ path: file.path });
+        content = docxResult.value;
+        break;
+
+      case 'txt':
+      default:
+        content = await fs.readFile(file.path, 'utf-8');
+        break;
+    }
+
+    // Validazione del contenuto estratto
+    if (!content || content.trim().length === 0) {
+      throw new Error('Document appears to be empty or corrupted');
+    }
+
+    // Limite di caratteri per evitare file troppo grandi
+    const maxContentLength = 1000000; // 1MB di testo
+    if (content.length > maxContentLength) {
+      throw new Error('Document content is too large');
+    }
+
+    return content.trim();
+
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to extract content from ${fileType.toUpperCase()} file: ${error.message}`);
+    }
+    throw new Error(`Failed to extract content from ${fileType.toUpperCase()} file`);
+  }
 }
 
 function getFileType(mimetype: string): 'pdf' | 'docx' | 'txt' {

@@ -15,7 +15,7 @@ export const config = {
   // Ollama (Local LLM)
   ollama: {
     host: process.env.OLLAMA_HOST || 'http://localhost:11434',
-    model: process.env.OLLAMA_MODEL || 'llama3.2:3b',
+    model: process.env.OLLAMA_MODEL || 'llama3:latest',
     embeddingModel: process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text',
     timeout: parseInt(process.env.OLLAMA_TIMEOUT || '120000'), // 2 minutes
   },

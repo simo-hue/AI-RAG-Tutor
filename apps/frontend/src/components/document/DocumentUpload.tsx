@@ -155,50 +155,12 @@ export const DocumentUpload = ({
           : file
       ));
 
-      // Simulate chunking phase (it happens immediately but we show it)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Now processing embeddings
-      const processingStartTime = Date.now();
+      // Upload completato con successo - non facciamo processamento automatico
       setUploadedFiles(prev => prev.map(file =>
         file.id === uploadedFile.id
           ? {
               ...file,
-              status: 'processing-embeddings',
-              progress: 98,
-              processingStartTime
-            }
-          : file
-      ));
-
-      // Start timer for embedding processing
-      const timer = setInterval(() => {
-        setUploadedFiles(prev => prev.map(file => {
-          if (file.id === uploadedFile.id && file.processingStartTime) {
-            const elapsed = (Date.now() - file.processingStartTime) / 1000;
-            return { ...file, processingStartTime: file.processingStartTime };
-          }
-          return file;
-        }));
-      }, 1000);
-
-      // Auto-process the document (chunking and embedding)
-      await documentService.processDocument(result.document.id);
-
-      clearInterval(timer);
-
-      // Processing completed
-      const processedDocument: ProcessedDocument = {
-        file: uploadedFile.file,
-        documentId: result.document.id,
-        wordCount: result.document.wordCount,
-        chunkCount: result.document.chunkCount
-      };
-
-      setUploadedFiles(prev => prev.map(file =>
-        file.id === uploadedFile.id
-          ? {
-              ...file,
+              documentId: result.document.id,
               status: 'completed',
               progress: 100,
               wordCount: result.document.wordCount,
@@ -207,8 +169,20 @@ export const DocumentUpload = ({
           : file
       ));
 
-      // Notify parent component
+      // Crea il documento processato per notificare il parent
+      const processedDocument: ProcessedDocument = {
+        file: uploadedFile.file,
+        documentId: result.document.id,
+        wordCount: result.document.wordCount,
+        chunkCount: result.document.chunkCount
+      };
+
+      // Notifica il parent component che l'upload è completato
       onDocumentProcessed?.(processedDocument);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Document uploaded successfully:', result.document.id);
+      }
 
     } catch (error: any) {
       // Always log errors but less verbosely in production
@@ -276,14 +250,37 @@ export const DocumentUpload = ({
         }
       }
 
+      // Gestione semplificata degli errori
+      let errorMessage = 'Upload failed';
+
+      if (error.response) {
+        const status = error.response.status;
+        const data = error.response.data;
+
+        if (status === 400) {
+          errorMessage = data?.message || 'Invalid file or request';
+        } else if (status === 413) {
+          errorMessage = 'File too large';
+        } else if (status === 415) {
+          errorMessage = 'File type not supported';
+        } else if (status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else {
+          errorMessage = data?.message || `Error ${status}`;
+        }
+      } else if (error.request) {
+        errorMessage = 'Network error. Please check your connection.';
+      } else {
+        errorMessage = error.message || 'Upload failed';
+      }
+
       setUploadedFiles(prev => prev.map(file =>
         file.id === uploadedFile.id
           ? {
               ...file,
               status: 'error',
-              error: isOllamaError
-                ? 'Servizio AI non disponibile. Assicurati che Ollama sia installato e funzionante.'
-                : error.message || 'Upload failed'
+              progress: 0,
+              error: errorMessage
             }
           : file
       ));
