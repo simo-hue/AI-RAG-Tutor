@@ -8,10 +8,11 @@ import { DocumentUpload, ProcessedDocument } from '@/components/document/Documen
 import { SimpleAudioRecorder } from '@/components/audio/SimpleAudioRecorder';
 import { EvaluationProcessor } from '@/components/evaluation/EvaluationProcessor';
 import { OllamaStatusPanel } from '@/components/admin/OllamaStatus';
-import { EvaluationResults } from '@/components/evaluation/EvaluationResults';
+import { EnhancedEvaluationResults } from '@/components/evaluation/EnhancedEvaluationResults';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import { FileText, ArrowRight, CheckCircle, Mic, BarChart3 } from 'lucide-react';
 import { EvaluationResult } from '@/services/evaluationService';
+import Link from 'next/link';
 
 export default function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -265,6 +266,37 @@ export default function UploadPage() {
           {/* Step 2: Audio Recording */}
           {currentStep === 2 && (
             <div className="space-y-6">
+              {/* Microphone Test Banner */}
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <Mic className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-blue-900">
+                          Test del Microfono Raccomandato
+                        </h3>
+                        <p className="text-sm text-blue-700">
+                          Verifica che il tuo microfono funzioni correttamente prima di registrare
+                        </p>
+                      </div>
+                    </div>
+                    <Link href="/microphone-test">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        <Mic className="w-4 h-4 mr-2" />
+                        Testa Microfono
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+
               <SimpleAudioRecorder
                 onRecordingComplete={(audioBlob, duration) => {
                   if (process.env.NODE_ENV === 'development') {
@@ -349,7 +381,7 @@ export default function UploadPage() {
 
               {/* Show results when evaluation is complete */}
               {evaluationResult && !isEvaluating && (
-                <EvaluationResults
+                <EnhancedEvaluationResults
                   evaluationResult={evaluationResult}
                   onRestart={handleRestart}
                 />

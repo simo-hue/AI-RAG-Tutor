@@ -203,16 +203,28 @@ export default function HomePage() {
           <p className="text-xl text-primary-100 mb-8">
             Inizia subito con la nostra demo interattiva e scopri come l'AI può aiutarti.
           </p>
-          <Link href="/upload">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="px-8 py-4 text-primary-600 hover:text-primary-700"
-            >
-              Inizia la Demo Gratuita
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <Link href="/microphone-test">
+              <Button
+                size="lg"
+                variant="outline"
+                className="px-8 py-4 text-white border-white hover:bg-white hover:text-primary-600"
+              >
+                <Mic className="w-5 h-5 mr-2" />
+                Testa il Microfono
+              </Button>
+            </Link>
+            <Link href="/upload">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="px-8 py-4 text-primary-600 hover:text-primary-700"
+              >
+                Inizia la Demo Gratuita
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

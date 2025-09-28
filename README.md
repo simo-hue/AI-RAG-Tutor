@@ -2,7 +2,19 @@
 
 Un sistema **completamente locale** e **operativo** di valutazione speech-to-text basato su RAG (Retrieval-Augmented Generation) che analizza presentazioni orali confrontandole con documenti di riferimento utilizzando **Ollama** e **Whisper locale**.
 
-**🚀 STATUS: PIENAMENTE FUNZIONANTE** - Sistema testato e operativo per il flusso completo: Upload → Registrazione → Trascrizione → Valutazione AI
+**🚀 STATUS: PRODUZIONE-READY** - Sistema completo, testato e ottimizzato con feedback avanzato e test microfono professionale
+
+## 🎬 Demo Live
+
+**Frontend**: [http://localhost:3000](http://localhost:3000) - Interfaccia utente completa
+**Backend API**: [http://localhost:3001](http://localhost:3001) - Server API con documentazione
+
+### ⚡ Quick Demo
+1. **Test Microfono**: [/microphone-test](http://localhost:3000/microphone-test) - Test hardware come Google Meet
+2. **Demo Completa**: [/upload](http://localhost:3000/upload) - Flusso completo valutazione
+3. **Documentazione**: [/docs](http://localhost:3000/docs) - Guida utente integrata
+
+---
 
 ## 🌟 Caratteristiche Principali
 
@@ -14,13 +26,15 @@ Un sistema **completamente locale** e **operativo** di valutazione speech-to-tex
 
 ### 🚀 **Funzionalità Complete (100% Operative)**
 - ✅ **Upload Documenti Multi-formato**: PDF, DOCX, TXT con drag & drop
-- ✅ **Registrazione Audio Professionale**: Waveform real-time e controlli avanzati
-- ✅ **Speech-to-Text Locale**: Trascrizione Whisper completamente configurata
+- ✅ **Test Microfono Professionale**: Selezione dispositivi, livelli real-time, visualizzazione audio
+- ✅ **Registrazione Audio Avanzata**: Waveform real-time, controlli professionali e validazione audio
+- ✅ **Speech-to-Text Locale**: Trascrizione Whisper completamente configurata e ottimizzata
 - ✅ **Sistema RAG Intelligente**: Embedding e similarity search con Ollama
-- ✅ **Valutazione AI Completa**: Scoring multi-criterio con feedback dettagliato
-- ✅ **Interfaccia Moderna**: Design responsive con Tailwind CSS
-- ✅ **Architettura Professionale**: Middleware di sicurezza, logging, rate limiting
+- ✅ **Valutazione AI Avanzata**: Analytics dashboard, scoring multi-criterio con feedback professionale
+- ✅ **Interfaccia Moderna**: Design responsive con Tailwind CSS e componenti UI avanzati
+- ✅ **Architettura Professionale**: Middleware di sicurezza, logging strutturato, rate limiting
 - ✅ **Gestione Automatica Porte**: Cleanup automatico per evitare conflitti
+- ✅ **Sistema Feedback Completo**: Analytics avanzati, piani di miglioramento personalizzati
 
 ## 🏗️ Architettura
 
@@ -168,6 +182,23 @@ npm run restart        # Cleanup automatico e restart
 npm run kill-ports     # Kill processi su porte 3000,3002
 ```
 
+#### Problemi Microfono/Audio
+```bash
+# Se il test del microfono non funziona:
+# 1. Verifica permessi browser (icona microfono nella barra indirizzi)
+# 2. Controlla che il microfono sia collegato e funzionante
+# 3. Prova con un browser diverso (Chrome/Firefox/Safari)
+# 4. Verifica che nessun'altra app stia usando il microfono
+```
+
+#### Errore "Settings is not defined" o componenti non definiti
+```bash
+# Se vedi errori di componenti non definiti:
+# 1. Verifica che tutti gli import siano corretti
+# 2. Riavvia il dev server: npm run dev
+# 3. Pulisci cache: rm -rf .next && npm run dev
+```
+
 #### Errore Whisper SSL/Certificati
 ```bash
 # Se Whisper non riesce a scaricare modelli:
@@ -187,26 +218,80 @@ ollama serve
 
 # Verifica modelli installati
 ollama list
+
+# Test connessione Ollama
+curl http://localhost:11434/api/tags
 ```
+
+#### Problemi con il Feedback Analytics
+```bash
+# Se il sistema di feedback non mostra i dati:
+# 1. Verifica che Ollama sia in esecuzione
+# 2. Controlla che il modello LLM sia scaricato
+# 3. Verifica la connessione backend su porta 3002
+# 4. Controlla i log del backend per errori AI
+```
+
+## 🎯 **Funzionalità Avanzate Implementate**
+
+### 🎤 **Test Microfono Professionale** (Nuovo in v1.6.0)
+Il sistema di test del microfono è stato completamente ridisegnato per offrire un'esperienza simile a Google Meet/Zoom:
+
+#### Caratteristiche Principali:
+- **Selezione Dispositivi**: Dropdown automatico di tutti i microfoni disponibili
+- **Visualizzazione Real-time**: Indicatori colorati di livello audio (rosso/giallo/verde)
+- **Gestione Permessi**: Richiesta automatica permessi con istruzioni chiare
+- **Feedback Visivo**: Barre di livello animate e indicatore percentuale
+- **Status Monitoring**: Stati chiari (Pronto/Test in Corso/Errore)
+- **Auto-cleanup**: Gestione automatica risorse audio e memory leak prevention
+
+#### Utilizzo:
+1. Accedi alla pagina [/microphone-test](http://localhost:3000/microphone-test)
+2. Consenti l'accesso al microfono quando richiesto
+3. Seleziona il dispositivo dal dropdown (se ne hai più di uno)
+4. Clicca "Inizia Test Audio" e parla normalmente
+5. Monitora i livelli colorati - l'ideale è nel verde (20-80%)
+6. Clicca "Test Completato" quando sei soddisfatto
+
+### 📊 **Sistema Feedback Avanzato** (Nuovo in v1.6.0)
+Dashboard analytics professionale con 5 tab specializzati per analisi complete:
+
+#### Tab Disponibili:
+1. **📋 Overview**: Punteggi generali con grafici radar e indicatori di performance
+2. **📈 Detailed Analysis**: Breakdown dettagliato per ogni criterio di valutazione
+3. **🎯 Improvement Plan**: Piano di miglioramento personalizzato con azioni prioritarie
+4. **📊 Analytics**: Statistiche avanzate (varianza, mediana, range, trends)
+5. **🔍 RAG Context**: Visualizzazione chunks del documento utilizzati nell'analisi
+
+#### Metriche Calcolate:
+- **Statistical Analysis**: Media, mediana, varianza, deviazione standard
+- **Performance Range**: Range punteggi e consistency analysis
+- **Improvement Priorities**: Raccomandazioni basate su gap analysis
+- **Context Relevance**: Matching score tra presentazione e documento di riferimento
 
 ## 🎯 **Funzionalità Complete Disponibili**
 
 ### ✅ **Sistema RAG Completo**
-- **Upload Documenti**: PDF, DOCX, TXT con validazione
-- **Document Processing**: Parsing, chunking e generazione embeddings
-- **Vector Search**: Similarity search contestuale con Ollama
-- **Context Retrieval**: Recupero chunks rilevanti per valutazione
+- **Upload Documenti**: PDF, DOCX, TXT con validazione e drag & drop
+- **Document Processing**: Parsing intelligente, chunking e generazione embeddings
+- **Vector Search**: Similarity search contestuale con Ollama e Nomic Embed
+- **Context Retrieval**: Recupero chunks rilevanti per valutazione RAG
 
-### ✅ **Registrazione e Trascrizione**
-- **Audio Recording**: Registrazione browser con waveform real-time
+### ✅ **Test e Registrazione Audio Professionale**
+- **Microphone Test**: Test dispositivi con selezione microfono come Google Meet/Zoom
+- **Audio Level Monitoring**: Visualizzazione livelli real-time con indicatori colorati
+- **Device Management**: Enumerazione automatica dispositivi e gestione permessi
+- **Audio Recording**: Registrazione browser con waveform professional e controlli avanzati
 - **Speech-to-Text**: Trascrizione locale con Whisper (no API esterne)
-- **Audio Processing**: Gestione formati multipli e validazione
+- **Audio Processing**: Gestione formati multipli, validazione e pulizia automatica
 
-### ✅ **Valutazione AI Avanzata**
-- **Evaluation Engine**: Valutazione multi-criterio con Ollama
-- **Scoring System**: Accuracy, Clarity, Completeness, Coherence, Fluency
-- **Detailed Feedback**: Feedback dettagliato con suggerimenti miglioramento
-- **Batch Processing**: Valutazione multipla e confronto presentazioni
+### ✅ **Valutazione AI Avanzata con Analytics**
+- **Evaluation Engine**: Valutazione multi-criterio con Ollama LLM
+- **Advanced Scoring**: Accuracy, Clarity, Completeness, Coherence, Fluency con statistiche
+- **Professional Feedback**: Dashboard analytics con 5 tab specializzati
+- **Improvement Plans**: Piani di miglioramento personalizzati con priorità azioni
+- **Statistical Analysis**: Analisi varianza, mediana, range e performance trends
+- **RAG Context Visualization**: Visualizzazione chunks rilevanti utilizzati nell'analisi
 
 ### ✅ **Sicurezza e Monitoring**
 - **Rate Limiting**: Limiti granulari per tipo di operazione
@@ -409,6 +494,15 @@ Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
 
 ## 📈 **Aggiornamenti Recenti**
 
+### ✅ **v1.6.0 - Sistema Professionale Completo** (Settembre 2024)
+- **🎤 Professional Microphone Test**: Test microfono avanzato con selezione dispositivi come Google Meet/Zoom
+- **📊 Advanced Feedback System**: Dashboard analytics con 5 tab specializzati e piani miglioramento
+- **🎯 Enhanced Audio Pipeline**: Visualizzazione livelli real-time e gestione dispositivi automatica
+- **🛡️ Component Robustness**: Audit completo applicazione con correzione errori TypeScript/ESLint
+- **🎨 UI/UX Improvements**: Interfaccia ottimizzata con componenti professionali e cleanup automatico
+- **📈 Statistical Analysis**: Analytics avanzati con calcoli varianza, mediana e performance trends
+- **🔧 Code Quality**: Rimozione funzionalità obsolete e ottimizzazione architettura componenti
+
 ### ✅ **v1.5.0 - Sistema Completamente Operativo** (Settembre 2024)
 - **🎯 Whisper Integration**: Configurato e testato OpenAI Whisper locale
 - **🔧 Automatic Port Management**: Sistema di cleanup automatico porte
@@ -425,6 +519,42 @@ Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
 - **Advanced Analytics**: Metriche di performance e trend analysis
 - **Mobile Responsive**: Ottimizzazione completa per dispositivi mobili
 - **Docker Deployment**: Container production-ready
+- **Export Features**: Esportazione report in PDF e statistiche CSV
+- **Real-time Collaboration**: Condivisione sessioni di valutazione
+- **Custom Models**: Supporto modelli LLM personalizzati
+
+## ⚡ **Ottimizzazioni Performance**
+
+### 🚀 **Configurazioni Consigliate per Performance Ottimale**
+
+#### Hardware Minimo Raccomandato:
+- **CPU**: 4+ core (Intel i5/AMD Ryzen 5 o superiore)
+- **RAM**: 8GB+ (16GB raccomandato per modelli LLM più grandi)
+- **Storage**: SSD con 10GB+ spazio libero
+- **Audio**: Microfono USB dedicato o cuffie di qualità
+
+#### Ottimizzazioni Ollama:
+```bash
+# Per sistemi con GPU NVIDIA (opzionale)
+ollama pull llama3.2:3b-q8_0      # Versione quantizzata ad alta qualità
+ollama pull llama3.2:7b-q4_0      # Bilanciamento qualità/velocità
+
+# Per sistemi con RAM limitata
+ollama pull llama3.2:1b           # Modello più leggero
+```
+
+#### Ottimizzazioni Browser:
+```bash
+# Chrome flags per performance audio ottimale:
+# chrome://flags/#enable-experimental-web-platform-features
+# chrome://flags/#autoplay-policy (No user gesture required)
+```
+
+#### Monitoring Performance:
+- **Frontend**: Componenti React ottimizzati con useMemo/useCallback
+- **Audio Pipeline**: Cleanup automatico AudioContext per prevenire memory leaks
+- **AI Processing**: Timeout configurabili per evitare blocking
+- **Rate Limiting**: Limiti intelligenti per proteggere risorse sistema
 
 ## 🆘 Supporto
 
@@ -435,8 +565,43 @@ Per problemi o domande:
 
 ### 🐛 **Bug Reports**
 Quando riporti un bug, includi:
-1. **Sistema Operativo**: macOS/Linux/Windows
-2. **Versioni**: Node.js, Python, npm
-3. **Log Output**: Output dei terminali frontend/backend
+1. **Sistema Operativo**: macOS/Linux/Windows + versione
+2. **Versioni Software**: Node.js, Python, npm, browser utilizzato
+3. **Log Output**: Output completo dei terminali frontend/backend
 4. **Passi per riprodurre**: Sequenza dettagliata del problema
-5. **File coinvolti**: Tipi di documenti e formati audio usati
+5. **File coinvolti**: Tipi di documenti, formati audio, dimensioni file
+6. **Errori Browser**: Console del browser (F12) per errori JavaScript
+7. **Configurazione**: File .env e configurazioni Ollama/Whisper
+8. **Dispositivi Audio**: Modello microfono e configurazione sistema
+
+### 📋 **Template Bug Report**
+```
+**Descrizione del problema:**
+[Descrizione dettagliata del bug]
+
+**Environment:**
+- OS: [macOS 14.0 / Ubuntu 22.04 / Windows 11]
+- Node.js: [v18.17.0]
+- Python: [3.9.7]
+- Browser: [Chrome 117.0 / Firefox 118.0]
+
+**Passi per riprodurre:**
+1. [Primo passo]
+2. [Secondo passo]
+3. [Errore si verifica qui]
+
+**Risultato atteso:**
+[Cosa dovrebbe succedere]
+
+**Risultato effettivo:**
+[Cosa succede invece]
+
+**Log Output:**
+[Output terminale backend]
+[Output terminale frontend]
+[Console browser (se applicabile)]
+
+**File di test:**
+[Tipo e dimensione documento]
+[Formato audio utilizzato]
+```

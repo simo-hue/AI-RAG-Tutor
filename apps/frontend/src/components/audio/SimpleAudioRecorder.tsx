@@ -58,140 +58,6 @@ export const SimpleAudioRecorder = ({
     enumerateAudioDevices,
   } = useSimpleAudioRecorder();
 
-  // Test riconoscimento vocale separato
-  const testSpeechRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert('❌ SpeechRecognition non supportato in questo browser');
-      return;
-    }
-
-    console.log('🧪 Test riconoscimento vocale...');
-
-    const testRecognition = new SpeechRecognition();
-    testRecognition.lang = 'it-IT';
-    testRecognition.continuous = false;
-    testRecognition.interimResults = true;
-
-    testRecognition.onstart = () => {
-      console.log('✅ Test riconoscimento avviato');
-      alert('✅ Test riconoscimento avviato - parla ora per 3 secondi');
-    };
-
-    testRecognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      console.log('✅ Test trascrizione ricevuta:', transcript);
-      alert(`✅ Test riuscito! Trascrizione: "${transcript}"`);
-    };
-
-    testRecognition.onerror = (event) => {
-      console.error('❌ Test fallito:', event.error);
-      alert(`❌ Test fallito: ${event.error}`);
-    };
-
-    testRecognition.onend = () => {
-      console.log('🔚 Test terminato');
-    };
-
-    try {
-      testRecognition.start();
-
-      // Stop automatico dopo 3 secondi
-      setTimeout(() => {
-        testRecognition.stop();
-      }, 3000);
-    } catch (error) {
-      console.error('❌ Errore avvio test:', error);
-      alert(`❌ Errore avvio test: ${error}`);
-    }
-  };
-
-  // Test microfono separato con fallback multipli
-  const testMicrophone = async () => {
-    try {
-      console.log('🧪 Test microfono in corso...');
-
-      // Test 1: Usa constraints vuoti per Safari
-      let stream: MediaStream;
-
-      try {
-        console.log('Test 1: getUserMedia con audio: true');
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (error) {
-        console.log('Test 1 fallito, provo con constraints vuoti...');
-
-        try {
-          // Test 2: Safari a volte funziona meglio con constraints più specifici
-          stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false
-            }
-          });
-          console.log('Test 2: Riuscito con constraints specifici');
-        } catch (error2) {
-          console.log('Test 2 fallito, provo con default device...');
-
-          // Test 3: Prova a specificare il device di default
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const audioInputs = devices.filter(d => d.kind === 'audioinput');
-
-          if (audioInputs.length > 0) {
-            stream = await navigator.mediaDevices.getUserMedia({
-              audio: { deviceId: audioInputs[0].deviceId }
-            });
-            console.log('Test 3: Riuscito con device specifico');
-          } else {
-            throw error; // Re-lancia l'errore originale
-          }
-        }
-      }
-
-      console.log('✅ Test microfono RIUSCITO!');
-      console.log('Stream info:', {
-        id: stream.id,
-        active: stream.active,
-        tracks: stream.getAudioTracks().length
-      });
-
-      // Ferma immediatamente il test
-      stream.getTracks().forEach(track => track.stop());
-
-      alert('✅ Test microfono riuscito! Il microfono è accessibile.');
-
-    } catch (testError: any) {
-      console.error('❌ Test microfono FALLITO:', testError);
-
-      // Mostra guida dettagliata basata sull'errore
-      let guide = `❌ Test fallito: ${testError.message || testError.name}\n\n`;
-
-      if (testError.name === 'NotFoundError') {
-        guide += `🔧 SOLUZIONI SPECIFICHE PER SAFARI/MAC:\n\n`;
-        guide += `1. 🎤 VERIFICA HARDWARE:\n`;
-        guide += `   - Apri "Memo Vocali" e prova a registrare\n`;
-        guide += `   - Se non funziona, il problema è hardware/sistema\n\n`;
-        guide += `2. 🛠️ SAFARI SETTINGS:\n`;
-        guide += `   - Safari > Impostazioni > Siti web > Microfono\n`;
-        guide += `   - Trova "localhost" o questo sito\n`;
-        guide += `   - Cambia da "Nega" a "Chiedi" o "Consenti"\n\n`;
-        guide += `3. 🔒 PRIVACY MACOS:\n`;
-        guide += `   - Preferenze Sistema > Privacy e Sicurezza > Microfono\n`;
-        guide += `   - Verifica che Safari sia selezionato\n\n`;
-        guide += `4. 🔄 RIPROVA:\n`;
-        guide += `   - Ricarica completamente la pagina (Cmd+R)\n`;
-        guide += `   - Chiudi e riapri Safari`;
-      } else if (testError.name === 'NotAllowedError') {
-        guide += `🚫 PERMESSI NEGATI - Risoluzione:\n`;
-        guide += `- Clicca sull'icona del microfono nella barra indirizzi\n`;
-        guide += `- Seleziona "Consenti sempre"\n`;
-        guide += `- Ricarica la pagina`;
-      }
-
-      alert(guide);
-    }
-  };
 
   // Formato durata
   const formatDuration = (seconds: number) => {
@@ -345,60 +211,17 @@ export const SimpleAudioRecorder = ({
             </div>
           )}
 
-          {/* Test Microfono Button */}
-          {!isRecording && error && (
-            <div className="text-center">
-              <Button
-                onClick={testMicrophone}
-                variant="outline"
-                size="sm"
-                className="text-warning-600 border-warning-600 hover:bg-warning-50"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Test Microfono
-              </Button>
-              <p className="text-xs text-secondary-500 mt-2">
-                Clicca per testare rapidamente l'accesso al microfono
-              </p>
-            </div>
-          )}
-
           {/* Controls */}
           <div className="flex items-center justify-center space-x-3">
             {!isRecording ? (
-              <>
-                <Button
-                  onClick={startRecording}
-                  className="flex items-center space-x-2"
-                  size="lg"
-                >
-                  <Mic className="w-5 h-5" />
-                  <span>Inizia Registrazione</span>
-                </Button>
-                {/* Pulsanti test sempre disponibili */}
-                {!error && (
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={testMicrophone}
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                    >
-                      <Settings className="w-3 h-3 mr-1" />
-                      Test Mic
-                    </Button>
-                    <Button
-                      onClick={testSpeechRecognition}
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-blue-600"
-                    >
-                      <Volume2 className="w-3 h-3 mr-1" />
-                      Test Voce
-                    </Button>
-                  </div>
-                )}
-              </>
+              <Button
+                onClick={startRecording}
+                className="flex items-center space-x-2"
+                size="lg"
+              >
+                <Mic className="w-5 h-5" />
+                <span>Inizia Registrazione</span>
+              </Button>
             ) : (
               <>
                 {!isPaused ? (
