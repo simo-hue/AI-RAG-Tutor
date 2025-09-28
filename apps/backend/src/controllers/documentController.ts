@@ -7,14 +7,29 @@ import fs from 'fs/promises';
 import { config } from '../config';
 import { cleanupMulterFiles, safeCleanupFile } from '../utils/fileCleanup';
 
+// Funzione helper per generare ID univoci
+function generateDocumentId(): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 9);
+  return `doc_${timestamp}_${random}`;
+}
+
 export const documentController = {
   async uploadDocument(req: Request, res: Response, next: NextFunction) {
     try {
+      console.log('🔍 Upload request received:', {
+        hasFile: !!req.file,
+        originalname: req.file?.originalname,
+        mimetype: req.file?.mimetype,
+        size: req.file?.size
+      });
+
       if (!req.file) {
         throw new AppError('No document file uploaded', 400);
       }
 
       const documentId = generateDocumentId();
+      console.log('🔍 Generated document ID:', documentId);
 
       // Validazioni robuste del file
       const allowedExtensions = ['.pdf', '.docx', '.txt'];
@@ -46,35 +61,79 @@ export const documentController = {
         throw new AppError('Uploaded file is not accessible', 400);
       }
 
-      // Upload del documento senza RAG processing per ora
-      const result = await documentService.uploadDocument(req.file);
+      console.log('🔍 Starting document upload and RAG processing...');
 
-      // Estrai le informazioni necessarie
-      const document = result.document;
-      const uploadProgress = result.uploadProgress;
+      // Prima processalo con il servizio RAG (mentre il file è ancora disponibile)
+      try {
+        const ragService = await RAGServiceManager.getInstance();
+        const ragDocumentService = new DocumentService(ragService);
 
-      // Risposta di successo con formato standardizzato
-      res.status(201).json({
-        success: true,
-        data: {
-          document: {
-            id: document.id,
-            name: document.name,
-            content: '', // Non includiamo il contenuto completo nella risposta
-            type: document.type,
-            uploadedAt: document.uploadedAt,
-            wordCount: document.content.split(/\s+/).length,
-            chunkCount: 0, // Sarà popolato durante il processamento
+        // Usa il file caricato per processamento RAG prima che venga spostato
+        const processingResult = await ragDocumentService.processDocument(req.file.path, documentId);
+        console.log('🔍 RAG processing completed:', {
+          documentId: processingResult.documentId,
+          chunkCount: processingResult.chunkCount,
+          wordCount: processingResult.wordCount
+        });
+
+        // Poi carica il documento normalmente
+        const uploadResult = await documentService.uploadDocument(req.file);
+        console.log('🔍 Document uploaded:', uploadResult.document.id);
+
+        // Estrai le informazioni necessarie
+        const document = uploadResult.document;
+        const uploadProgress = uploadResult.uploadProgress;
+
+        // Risposta di successo con formato standardizzato
+        res.status(201).json({
+          success: true,
+          data: {
+            document: {
+              id: document.id,
+              name: document.name,
+              content: '', // Non includiamo il contenuto completo nella risposta
+              type: document.type,
+              uploadedAt: document.uploadedAt,
+              wordCount: document.content.split(/\s+/).length,
+              chunkCount: processingResult.chunkCount, // Usa i dati dal processamento RAG
+            },
+            uploadProgress: {
+              documentId: document.id,
+              stage: 'complete' as const,
+              progress: 100,
+              message: 'Document uploaded and processed successfully'
+            }
           },
-          uploadProgress: {
-            documentId: document.id,
-            stage: 'complete' as const,
-            progress: 100,
-            message: 'Document uploaded successfully'
-          }
-        },
-        message: 'Document uploaded successfully',
-      });
+          message: 'Document uploaded and processed successfully',
+        });
+
+      } catch (ragError) {
+        console.error('🔍 RAG processing failed, but document was uploaded:', ragError);
+        // Non bloccare l'upload se il RAG fallisce
+        const document = uploadResult.document;
+
+        res.status(201).json({
+          success: true,
+          data: {
+            document: {
+              id: document.id,
+              name: document.name,
+              content: '',
+              type: document.type,
+              uploadedAt: document.uploadedAt,
+              wordCount: document.content.split(/\s+/).length,
+              chunkCount: 0,
+            },
+            uploadProgress: {
+              documentId: document.id,
+              stage: 'complete' as const,
+              progress: 100,
+              message: 'Document uploaded successfully (RAG processing failed)'
+            }
+          },
+          message: 'Document uploaded successfully (RAG processing will be retried)',
+        });
+      }
 
     } catch (error) {
       // Cleanup file in caso di errore
@@ -465,22 +524,3 @@ export const documentController = {
     }
   },
 };
-
-function generateDocumentId(): string {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substr(2, 9);
-  return `doc_${timestamp}_${random}`;
-}
-
-function getDocumentType(extension: string): 'pdf' | 'docx' | 'txt' {
-  switch (extension) {
-    case '.pdf':
-      return 'pdf';
-    case '.docx':
-      return 'docx';
-    case '.txt':
-      return 'txt';
-    default:
-      return 'txt'; // default fallback
-  }
-}

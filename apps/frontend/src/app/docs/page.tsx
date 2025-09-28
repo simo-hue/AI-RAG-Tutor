@@ -1,5 +1,3 @@
-'use client';
-
 import { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { StructuredData } from '@/components/seo/StructuredData';
@@ -48,7 +46,6 @@ import {
   ExternalLink,
   ChevronRight,
   CheckCircle,
-  AlertTriangle,
   BookOpen,
   Users,
   Star

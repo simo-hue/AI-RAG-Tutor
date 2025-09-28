@@ -23,6 +23,7 @@ import { documentRoutes } from './routes/documentRoutes';
 import { audioRoutes } from './routes/audioRoutes';
 import { evaluationRoutes } from './routes/evaluationRoutes';
 import { healthRoutes } from './routes/healthRoutes';
+import { testRoutes } from './routes/testRoutes';
 
 // Function to cleanup port before starting
 async function cleanupPort(port: number): Promise<void> {
@@ -112,6 +113,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/evaluations', evaluationRoutes);
+app.use('/api/test', testRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
