@@ -26,6 +26,7 @@ interface EvaluationProcessorProps {
   documentId: string;
   onEvaluationComplete: (result: EvaluationResult) => void;
   onError: (error: string) => void;
+  model?: string;
   className?: string;
 }
 
@@ -89,6 +90,7 @@ export const EvaluationProcessor = ({
   documentId,
   onEvaluationComplete,
   onError,
+  model = 'llama3.2:3b',
   className
 }: EvaluationProcessorProps) => {
   const [currentStage, setCurrentStage] = useState<ProcessingStage>('initializing');
@@ -144,7 +146,8 @@ export const EvaluationProcessor = ({
         documentId,
         {
           maxChunks: 5,
-          detailedFeedback: true
+          detailedFeedback: true,
+          model: model
         }
       );
 

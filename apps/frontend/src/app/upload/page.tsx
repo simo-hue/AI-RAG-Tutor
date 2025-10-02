@@ -9,6 +9,8 @@ import { SimpleAudioRecorder } from '@/components/audio/SimpleAudioRecorder';
 import { EvaluationProcessor } from '@/components/evaluation/EvaluationProcessor';
 import { OllamaStatusPanel } from '@/components/admin/OllamaStatus';
 import { EnhancedEvaluationResults } from '@/components/evaluation/EnhancedEvaluationResults';
+import { OllamaModelSelector } from '@/components/ollama/OllamaModelSelector';
+import { LanguageSelector } from '@/components/language/LanguageSelector';
 import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from '@/components/ui';
 import { FileText, ArrowRight, CheckCircle, Mic, BarChart3 } from 'lucide-react';
 import { EvaluationResult } from '@/services/evaluationService';
@@ -23,6 +25,9 @@ export default function UploadPage() {
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>('llama3.2:3b');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('it');
+  const [documentText, setDocumentText] = useState<string>('');
 
   const handleFileUpload = (files: File[]) => {
     setUploadedFiles(prev => [...prev, ...files]);
@@ -33,6 +38,13 @@ export default function UploadPage() {
     // Use the first processed document as the active documentId
     if (!documentId) {
       setDocumentId(document.documentId);
+    }
+
+    // Se il documento ha una lingua rilevata, impostala automaticamente
+    if (document.detectedLanguage) {
+      console.log('🌍 Setting language from document:', document.detectedLanguage);
+      setSelectedLanguage(document.detectedLanguage.code);
+      handleLanguageSelect(document.detectedLanguage.code);
     }
   };
 
@@ -90,6 +102,16 @@ export default function UploadPage() {
     setEvaluationResult(null);
     setEvaluationError(null);
     setIsEvaluating(false);
+  };
+
+  const handleModelSelect = (modelName: string) => {
+    setSelectedModel(modelName);
+    console.log('Selected model:', modelName);
+  };
+
+  const handleLanguageSelect = (language: string) => {
+    setSelectedLanguage(language);
+    console.log('Selected language:', language);
   };
 
   const steps = [
@@ -164,6 +186,24 @@ export default function UploadPage() {
           </div>
         </div>
 
+        {/* Configuration Panel - Always visible */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Ollama Model Selector */}
+          <OllamaModelSelector
+            onModelSelect={handleModelSelect}
+            defaultModel={selectedModel}
+          />
+
+          {/* Language Selector */}
+          <LanguageSelector
+            onLanguageSelect={handleLanguageSelect}
+            defaultLanguage={selectedLanguage}
+            autoDetect={true}
+            documentText={documentText}
+            showAutoDetection={true}
+          />
+        </div>
+
         {/* Main Content */}
         <div className="space-y-8">
           {/* Step 1: Upload Documents */}
@@ -186,6 +226,7 @@ export default function UploadPage() {
                 <DocumentUpload
                   onFileUpload={handleFileUpload}
                   onDocumentProcessed={handleDocumentProcessed}
+                  onDocumentTextExtracted={(text) => setDocumentText(text)}
                   maxFiles={3}
                   maxSize={50}
                 />
@@ -307,6 +348,7 @@ export default function UploadPage() {
                 onFeedbackRequest={handleFeedbackRequest}
                 autoTranscribe={true}
                 maxDuration={600} // 10 minutes
+                language={selectedLanguage}
               />
 
               {transcription && (
@@ -374,6 +416,7 @@ export default function UploadPage() {
                 <EvaluationProcessor
                   transcription={transcription}
                   documentId={documentId}
+                  model={selectedModel}
                   onEvaluationComplete={handleEvaluationComplete}
                   onError={handleEvaluationError}
                 />

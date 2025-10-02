@@ -231,7 +231,10 @@ export const EnhancedEvaluationResults = ({
             <div className="space-y-2">
               <div className="flex items-center space-x-3">
                 <div className={`p-3 rounded-xl bg-white/10 backdrop-blur-sm`}>
-                  <performanceLevel.icon className="w-6 h-6" />
+                  {(() => {
+                    const PerformanceIcon = performanceLevel.icon;
+                    return <PerformanceIcon className="w-6 h-6" />;
+                  })()}
                 </div>
                 <div>
                   <h2 className="text-3xl font-bold">Valutazione AI Completata</h2>
@@ -399,7 +402,7 @@ export const EnhancedEvaluationResults = ({
                       <Badge variant="outline">{analytics.distribution.fair} criteri</Badge>
                     </div>
                     <div className="flex items-center justify-between p-2 bg-error-50 rounded">
-                      <span className="text-sm">Da migliorare (<4)</span>
+                      <span className="text-sm">Da migliorare (&lt;4)</span>
                       <Badge variant="error">{analytics.distribution.poor} criteri</Badge>
                     </div>
                   </div>

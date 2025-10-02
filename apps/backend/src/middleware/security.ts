@@ -38,8 +38,10 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
   const allowedOrigins = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'http://localhost:3002',
     'https://localhost:3000',
     'https://localhost:3001',
+    'https://localhost:3002',
   ];
 
   // In produzione, aggiungi i domini specifici

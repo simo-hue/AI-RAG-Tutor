@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
 import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 import { config, validateConfig } from './config';
 import { errorHandler } from './middleware/errorHandler';
 import { generalLimiter } from './middleware/rateLimiter';
@@ -24,6 +26,9 @@ import { audioRoutes } from './routes/audioRoutes';
 import { evaluationRoutes } from './routes/evaluationRoutes';
 import { healthRoutes } from './routes/healthRoutes';
 import { testRoutes } from './routes/testRoutes';
+import ollamaRoutes from './routes/ollamaRoutes';
+import languageRoutes from './routes/languageRoutes';
+import { ollamaManager } from './utils/ollamaManager';
 
 // Function to cleanup port before starting
 async function cleanupPort(port: number): Promise<void> {
@@ -114,6 +119,8 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/evaluations', evaluationRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/ollama', ollamaRoutes);
+app.use('/api/languages', languageRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -133,6 +140,42 @@ const startServer = async () => {
     // Clean up port before starting
     await cleanupPort(config.port);
 
+    // Ensure upload directories exist
+    const uploadsDir = path.resolve(config.storage.uploadDir);
+    const audioDir = path.join(uploadsDir, 'audio');
+
+    [uploadsDir, audioDir].forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        logger.info(`Created directory: ${dir}`);
+      }
+    });
+
+    // Start Ollama automatically
+    logger.info('Checking Ollama service...');
+    const ollamaStarted = await ollamaManager.start();
+    if (ollamaStarted) {
+      logger.info('✅ Ollama service is running');
+      console.log('✅ Ollama service is running');
+
+      // Ensure default model is available
+      const defaultModel = 'llama3.2:3b';
+      logger.info(`Checking for default model: ${defaultModel}`);
+      const hasModel = await ollamaManager.hasModel(defaultModel);
+      if (!hasModel) {
+        logger.warn(`Default model ${defaultModel} not found. Please pull it using: ollama pull ${defaultModel}`);
+        console.log(`⚠️  Default model ${defaultModel} not found`);
+        console.log(`   You can pull it by visiting the Ollama settings in the app`);
+      } else {
+        logger.info(`✅ Default model ${defaultModel} is available`);
+        console.log(`✅ Default model ${defaultModel} is available`);
+      }
+    } else {
+      logger.warn('⚠️  Ollama service failed to start. Some features may not work.');
+      console.log('⚠️  Ollama service failed to start. Please start it manually.');
+      console.log('   Visit https://ollama.ai to install Ollama if not installed');
+    }
+
     const server = app.listen(config.port, () => {
       logger.info('AI Speech Evaluator Backend started successfully', {
         port: config.port,
@@ -143,6 +186,7 @@ const startServer = async () => {
 
       console.log(`🚀 Server running on port ${config.port} in ${config.nodeEnv} mode`);
       console.log(`📍 Health check: http://localhost:${config.port}/api/health`);
+      console.log(`🤖 Ollama API: http://localhost:${config.port}/api/ollama`);
       console.log(`🔒 Security middleware active`);
       console.log(`📊 Comprehensive logging enabled`);
       console.log(`🛡️  Rate limiting configured`);
@@ -164,8 +208,9 @@ startServer().then(server => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, starting graceful shutdown');
+  await ollamaManager.stop();
   const server = globalThis.server;
   if (server) {
     server.close(() => {
@@ -177,8 +222,9 @@ process.on('SIGTERM', () => {
   }
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   logger.info('SIGINT received, starting graceful shutdown');
+  await ollamaManager.stop();
   const server = globalThis.server;
   if (server) {
     server.close(() => {

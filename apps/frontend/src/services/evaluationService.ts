@@ -70,6 +70,7 @@ class EvaluationService {
     options?: {
       maxChunks?: number;
       detailedFeedback?: boolean;
+      model?: string;
     }
   ): Promise<EvaluationResult> {
     const response = await fetch(`${this.baseUrl}/api/evaluations/evaluate`, {

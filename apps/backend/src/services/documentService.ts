@@ -10,14 +10,17 @@ const documents: Document[] = [];
 const uploadProgresses: Record<string, UploadProgress> = {};
 
 export const documentService = {
-  async uploadDocument(file: Express.Multer.File) {
+  async uploadDocument(file: Express.Multer.File, providedId?: string) {
     try {
       // Extract content based on file type
       const content = await extractContent(file);
 
+      // Use provided ID or generate new one
+      const documentId = providedId || generateId();
+
       // Create document object
       const document: Document = {
-        id: generateId(),
+        id: documentId,
         name: file.originalname,
         content,
         type: getFileType(file.mimetype),
@@ -112,22 +115,24 @@ async function extractContent(file: Express.Multer.File): Promise<string> {
 
   try {
     let content = '';
+    // Risolvi il percorso del file in modo assoluto
+    const filePath = path.resolve(file.path);
 
     switch (fileType) {
       case 'pdf':
-        const pdfBuffer = await fs.readFile(file.path);
+        const pdfBuffer = await fs.readFile(filePath);
         const pdfData = await pdfParse(pdfBuffer);
         content = pdfData.text;
         break;
 
       case 'docx':
-        const docxResult = await mammoth.extractRawText({ path: file.path });
+        const docxResult = await mammoth.extractRawText({ path: filePath });
         content = docxResult.value;
         break;
 
       case 'txt':
       default:
-        content = await fs.readFile(file.path, 'utf-8');
+        content = await fs.readFile(filePath, 'utf-8');
         break;
     }
 

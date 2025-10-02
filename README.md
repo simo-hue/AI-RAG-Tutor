@@ -1,18 +1,20 @@
 # AI Speech Evaluator - Sistema di Valutazione Presentazioni 🎯
 
-Un sistema **completamente locale** e **operativo** di valutazione speech-to-text basato su RAG (Retrieval-Augmented Generation) che analizza presentazioni orali confrontandole con documenti di riferimento utilizzando **Ollama** e **Whisper locale**.
+Un sistema **completamente locale** e **intelligente** di valutazione speech-to-text basato su RAG (Retrieval-Augmented Generation) che analizza presentazioni orali confrontandole con documenti di riferimento utilizzando **Ollama**, **Whisper locale** e **rilevamento automatico della lingua**.
 
-**🚀 STATUS: PRODUZIONE-READY** - Sistema completo, testato e ottimizzato con feedback avanzato e test microfono professionale
+**🚀 STATUS: PRODUZIONE-READY** - Sistema completo, testato e ottimizzato con gestione automatica di Ollama, selezione modelli AI e supporto multi-lingua
 
 ## 🎬 Demo Live
 
-**Frontend**: [http://localhost:3000](http://localhost:3000) - Interfaccia utente completa
-**Backend API**: [http://localhost:3001](http://localhost:3001) - Server API con documentazione
+**Frontend**: [http://localhost:3002](http://localhost:3002) - Interfaccia utente completa
+**Backend API**: [http://localhost:3001](http://localhost:3001) - Server API con gestione automatica Ollama
 
-### ⚡ Quick Demo
-1. **Test Microfono**: [/microphone-test](http://localhost:3000/microphone-test) - Test hardware come Google Meet
-2. **Demo Completa**: [/upload](http://localhost:3000/upload) - Flusso completo valutazione
-3. **Documentazione**: [/docs](http://localhost:3000/docs) - Guida utente integrata
+### ⚡ Quick Start Demo
+
+1. **Avvia l'applicazione**: `npm run dev` (Ollama si avvia automaticamente!)
+2. **Test Microfono**: [/microphone-test](http://localhost:3002/microphone-test) - Test hardware professionale
+3. **Demo Completa**: [/upload](http://localhost:3002/upload) - Flusso completo con auto-config
+4. **Documentazione**: [/docs](http://localhost:3002/docs) - Guida utente integrata
 
 ---
 
@@ -23,33 +25,60 @@ Un sistema **completamente locale** e **operativo** di valutazione speech-to-tex
 - **Privacy totale** - I dati non lasciano mai il tuo server
 - **Costi zero** - Nessun costo per API calls
 - **Controllo completo** - Modelli e configurazioni personalizzabili
+- **Avvio automatico** - Ollama e dipendenze gestite automaticamente
+
+### 🤖 **Gestione Intelligente AI (Nuova v1.7.0!)**
+- ✅ **Avvio Automatico Ollama**: Il sistema avvia e gestisce Ollama automaticamente
+- ✅ **Selezione Modelli AI**: Interfaccia grafica per scaricare e selezionare modelli LLM
+- ✅ **Download Modelli**: Scarica modelli direttamente dall'interfaccia con progress bar
+- ✅ **Gestione Modelli**: Visualizza, installa e switcha tra modelli disponibili
+- ✅ **Monitoraggio Status**: Verifica stato Ollama e modelli in tempo reale
+
+### 🌍 **Supporto Multi-Lingua Intelligente (Nuova v1.7.0!)**
+- ✅ **Rilevamento Automatico**: Identifica la lingua del documento automaticamente
+- ✅ **10+ Lingue Supportate**: Italiano, Inglese, Spagnolo, Francese, Tedesco, e altro
+- ✅ **Validazione Compatibilità**: Controlla coerenza tra documento e audio
+- ✅ **Override Manuale**: Selezione manuale della lingua quando necessario
+- ✅ **Feedback Intelligente**: Warning per incompatibilità linguistiche
 
 ### 🚀 **Funzionalità Complete (100% Operative)**
 - ✅ **Upload Documenti Multi-formato**: PDF, DOCX, TXT con drag & drop
-- ✅ **Test Microfono Professionale**: Selezione dispositivi, livelli real-time, visualizzazione audio
-- ✅ **Registrazione Audio Avanzata**: Waveform real-time, controlli professionali e validazione audio
-- ✅ **Speech-to-Text Locale**: Trascrizione Whisper completamente configurata e ottimizzata
+- ✅ **Test Microfono Professionale**: Selezione dispositivi, livelli real-time
+- ✅ **Registrazione Audio Avanzata**: Waveform real-time, controlli professionali
+- ✅ **Speech-to-Text Multi-Lingua**: Trascrizione Whisper con rilevamento lingua
 - ✅ **Sistema RAG Intelligente**: Embedding e similarity search con Ollama
-- ✅ **Valutazione AI Avanzata**: Analytics dashboard, scoring multi-criterio con feedback professionale
-- ✅ **Interfaccia Moderna**: Design responsive con Tailwind CSS e componenti UI avanzati
-- ✅ **Architettura Professionale**: Middleware di sicurezza, logging strutturato, rate limiting
-- ✅ **Gestione Automatica Porte**: Cleanup automatico per evitare conflitti
-- ✅ **Sistema Feedback Completo**: Analytics avanzati, piani di miglioramento personalizzati
+- ✅ **Valutazione AI Avanzata**: Analytics dashboard, scoring multi-criterio
+- ✅ **Interfaccia Moderna**: Design responsive con configurazione intelligente
+- ✅ **Architettura Professionale**: Middleware di sicurezza, logging strutturato
 
 ## 🏗️ Architettura
 
 ```
 ai-speech-evaluator/
 ├── apps/
-│   ├── frontend/          # Next.js React app
-│   └── backend/           # Express.js API server
+│   ├── frontend/              # Next.js React app
+│   │   ├── src/components/
+│   │   │   ├── ollama/       # Gestione modelli Ollama (NUOVO!)
+│   │   │   ├── language/     # Selezione lingua (NUOVO!)
+│   │   │   ├── audio/        # Registrazione e test
+│   │   │   ├── evaluation/   # Valutazione e feedback
+│   │   │   └── document/     # Upload documenti
+│   │   └── src/app/          # Pages e routing
+│   └── backend/               # Express.js API server
+│       ├── src/routes/        # API endpoints
+│       │   ├── ollamaRoutes  # Gestione Ollama (NUOVO!)
+│       │   └── languageRoutes # Gestione lingua (NUOVO!)
+│       └── src/utils/
+│           ├── ollamaManager # Avvio auto Ollama (NUOVO!)
+│           └── languageDetector # Rilevamento lingua (NUOVO!)
 ├── packages/
-│   ├── shared/            # Tipi e schemi condivisi
-│   ├── database/          # Prisma ORM e migrations
-│   ├── ai-services/       # Servizi AI e RAG
-│   └── audio-services/    # Servizi audio e trascrizione
-├── docs/                  # Documentazione
-└── scripts/               # Utility scripts
+│   ├── shared/               # Tipi e schemi condivisi
+│   ├── database/             # Prisma ORM e migrations
+│   ├── ai-services/          # Servizi AI e RAG
+│   └── audio-services/       # Servizi audio e trascrizione
+└── docs/                     # Documentazione
+    ├── OLLAMA_SETUP.md      # Setup Ollama (NUOVO!)
+    └── LANGUAGE_SUPPORT.md  # Supporto lingue (NUOVO!)
 ```
 
 ## 🛠️ Stack Tecnologico
@@ -61,8 +90,6 @@ ai-speech-evaluator/
 - **React Dropzone** - File upload con drag & drop
 - **MediaRecorder API** - Registrazione audio nativa
 - **AudioContext API** - Analisi audio real-time
-- **Canvas API** - Visualizzazione waveform
-- **Lucide React** - Icons moderni
 
 ### Backend
 - **Express.js** - Web server con middleware enterprise
@@ -70,58 +97,56 @@ ai-speech-evaluator/
 - **Multer** - File upload sicuro
 - **Winston** - Logging professionale
 - **Helmet** - Security headers
-- **Express Rate Limit** - Rate limiting granulare
-- **Express Validator** - Validazione input robusta
 
-### 🤖 **AI & ML Locale (Configurato e Testato)**
-- **Ollama** ✅ - LLM locale (Llama 3.2:3b, Qwen, ecc.)
-- **OpenAI Whisper** ✅ - Speech-to-text locale con modello base precaricato
-- **Vector Store** ✅ - Similarity search in-memory o Pinecone
-- **Custom RAG Pipeline** ✅ - Implementazione RAG ottimizzata e testata
-- **Embedding Locale** ✅ - Nomic Embed Text via Ollama (768 dimensioni)
+### 🤖 **AI & ML Locale (Gestito Automaticamente!)**
+- **Ollama** ✅ - Avvio automatico e gestione modelli LLM
+- **Llama 3.2** ✅ - Modello AI principale (3B/1B parametri)
+- **Nomic Embed** ✅ - Embeddings per RAG (768 dimensioni)
+- **OpenAI Whisper** ✅ - Speech-to-text multi-lingua locale
+- **Custom RAG Pipeline** ✅ - Pipeline RAG ottimizzata
 
 ## 🚀 Quick Start
 
-### Prerequisiti (Obbligatori)
-- **Node.js 18+** ✅ - Runtime JavaScript
-- **Python 3.8+** ✅ - Per OpenAI Whisper
-- **Ollama** ✅ - Server LLM locale ([Installa qui](https://ollama.ai))
-- **Browser moderno** ✅ - Con supporto MediaRecorder API
+### Prerequisiti
 
-### Prerequisiti Opzionali
+**Obbligatori:**
+- **Node.js 18+** - Runtime JavaScript
+- **Python 3.8+** - Per OpenAI Whisper
+- **Ollama** - Server LLM locale ([Download](https://ollama.ai))
+
+**Opzionali:**
 - **PostgreSQL** - Per storage persistente (futuro)
-- **Pinecone** - Per vector database cloud (opzionale)
 - **Docker** - Per deployment containerizzato
 
-### 🔧 Installazione
+### 🔧 Installazione Rapida
 
-#### 1. **Setup Ollama (Obbligatorio)**
+#### 1. **Setup Ollama**
+
 ```bash
-# Installa Ollama dal sito ufficiale
+# macOS/Linux - Installa Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Avvia il server Ollama
-ollama serve
+# Windows - Scarica da https://ollama.ai
 
-# In un nuovo terminale, scarica i modelli richiesti
-ollama pull llama3.2:3b          # Modello LLM principale
-ollama pull nomic-embed-text     # Modello per embeddings
+# ✨ NUOVO: Non serve avviare manualmente!
+# L'applicazione avvierà Ollama automaticamente
 ```
 
-#### 2. **Setup OpenAI Whisper (Obbligatorio)**
+#### 2. **Setup OpenAI Whisper**
+
 ```bash
-# Installa OpenAI Whisper per trascrizione locale
+# Installa Whisper per trascrizione locale
 pip3 install openai-whisper
 
 # Verifica installazione
 whisper --help
 
-# Il modello 'base' verrà scaricato automaticamente al primo uso
-# Puoi pre-scaricare il modello per evitare latenza:
+# Pre-scarica modello (opzionale)
 python3 -c "import whisper; whisper.load_model('base')"
 ```
 
-#### 3. **Clone e Setup Progetto**
+#### 3. **Setup Progetto**
+
 ```bash
 # Clone repository
 git clone https://github.com/simo-hue/AI-RAG-Tutor.git
@@ -130,355 +155,382 @@ cd AI-RAG-Tutor
 # Installa dipendenze
 npm install
 
-# Configura environment dal template
+# Configura environment (opzionale - usa valori di default)
 cp apps/backend/.env.example apps/backend/.env
 ```
 
-#### 4. **Configurazione Base (.env)**
-```bash
-# File: apps/backend/.env
-NODE_ENV=development
-PORT=3002
+#### 4. **Avvia Applicazione**
 
-# Ollama Configuration
+```bash
+# 🚀 Avvio con auto-configurazione
+npm run dev
+
+# Il sistema automaticamente:
+# ✅ Avvia Ollama (se non è già in esecuzione)
+# ✅ Verifica modelli disponibili
+# ✅ Mostra stato nella console
+# ✅ Avvia frontend e backend
+```
+
+**Console Output:**
+```
+✅ Ollama service is running
+✅ Default model llama3.2:3b is available
+🚀 Server running on port 3001 in development mode
+🤖 Ollama API: http://localhost:3001/api/ollama
+📍 Health check: http://localhost:3001/api/health
+```
+
+### ✅ **Verifica Setup**
+
+1. **Frontend**: [http://localhost:3002](http://localhost:3002)
+2. **Backend Health**: [http://localhost:3001/api/health](http://localhost:3001/api/health)
+3. **Ollama Status**: [http://localhost:3001/api/ollama/status](http://localhost:3001/api/ollama/status)
+
+### 🎯 **Primo Utilizzo - Demo Guidata**
+
+1. **Apri** [http://localhost:3002/upload](http://localhost:3002/upload)
+
+2. **Configura Sistema** (nella parte superiore):
+   - **Selettore Modelli AI**: Verifica/scarica modello Ollama
+   - **Selettore Lingua**: Lascia su "Auto" o seleziona manualmente
+
+3. **Carica Documento**:
+   - Trascina un file TXT, PDF o DOCX
+   - Il sistema rileva automaticamente la lingua
+   - Attendi completamento processing
+
+4. **Registra Audio**:
+   - Clicca "Inizia Registrazione"
+   - Parla per ~1-2 minuti
+   - Stop registrazione
+   - Trascrizione automatica nella stessa lingua del documento
+
+5. **Ottieni Feedback**:
+   - Clicca "Ottieni Feedback"
+   - Attendi valutazione AI (~30 secondi)
+   - Esplora risultati nei 5 tab disponibili
+
+## 🎯 **Nuove Funzionalità v1.7.0**
+
+### 🤖 **Gestione Automatica Ollama**
+
+#### Avvio Automatico
+```typescript
+// Il backend avvia automaticamente Ollama
+npm run dev
+
+// Output:
+✅ Ollama service is running
+✅ Default model llama3.2:3b is available
+```
+
+#### Interfaccia Gestione Modelli
+- **Lista Modelli**: Visualizza tutti i modelli installati
+- **Download Modelli**: Scarica nuovi modelli con progress bar
+- **Selezione Modello**: Scegli quale modello usare per le valutazioni
+- **Modelli Consigliati**:
+  - 🏆 **llama3.2:3b** - Veloce e bilanciato (consigliato)
+  - ⚡ **llama3.2:1b** - Leggerissimo per test rapidi
+  - 💪 **llama3.1:8b** - Più potente ma più lento
+  - 🎨 **gemma2:2b** - Alternativa di Google
+
+#### API Ollama
+```bash
+# Status Ollama
+GET /api/ollama/status
+
+# Avvia Ollama
+POST /api/ollama/start
+
+# Lista modelli
+GET /api/ollama/models
+
+# Scarica modello
+POST /api/ollama/models/pull
+Body: { "modelName": "llama3.2:3b" }
+```
+
+### 🌍 **Supporto Multi-Lingua Intelligente**
+
+#### Rilevamento Automatico
+```typescript
+// Il sistema rileva automaticamente la lingua:
+1. Carica documento.txt
+   → Sistema analizza il testo
+   → Rileva: Italiano (confidenza: 92%)
+
+2. Mostra nella UI:
+   🇮🇹 Italiano (Auto) ✅
+   Confidenza: Alta (92%)
+```
+
+#### Lingue Supportate
+| Lingua | Auto-Detect | Whisper | Valutazione |
+|--------|-------------|---------|-------------|
+| 🇮🇹 Italiano | ✅ | ✅ | ✅ |
+| 🇬🇧 Inglese | ✅ | ✅ | ✅ |
+| 🇪🇸 Spagnolo | ✅ | ✅ | ✅ |
+| 🇫🇷 Francese | ✅ | ✅ | ✅ |
+| 🇩🇪 Tedesco | ✅ | ✅ | ✅ |
+| 🇵🇹 Portoghese | ✅ | ✅ | ✅ |
+| 🇨🇳 Cinese | ✅ | ✅ | ✅ |
+| 🇯🇵 Giapponese | ✅ | ✅ | ✅ |
+| 🇷🇺 Russo | ✅ | ✅ | ✅ |
+| 🇸🇦 Arabo | ✅ | ✅ | ✅ |
+
+#### Validazione Compatibilità
+```typescript
+// Il sistema controlla coerenza documento/audio
+Documento: Italiano ✅
+Audio: Italiano ✅
+→ Valutazione procede
+
+Documento: Italiano ⚠️
+Audio: Inglese ⚠️
+→ Warning: Lingue diverse, valutazione inaccurata
+```
+
+#### API Lingue
+```bash
+# Lista lingue supportate
+GET /api/languages
+
+# Rileva lingua da testo
+POST /api/languages/detect
+Body: { "text": "Il tuo testo...", "method": "heuristic" }
+
+# Valida compatibilità
+POST /api/languages/validate
+Body: {
+  "documentLanguage": "it",
+  "transcriptionLanguage": "en"
+}
+```
+
+## 📊 **Flusso Operativo Completo (Aggiornato)**
+
+```
+1. ⚡ npm run dev
+   ↓
+2. 🤖 Sistema avvia Ollama automaticamente
+   ↓
+3. 📄 Upload Documento
+   ↓
+4. 🌍 Rilevamento automatico lingua (es: Italiano 92%)
+   ↓
+5. ✂️ Chunking + Embedding (Ollama)
+   ↓
+6. 🎤 Registrazione Audio
+   ↓
+7. 🗣️ Trascrizione (Whisper in lingua selezionata)
+   ↓
+8. ✅ Validazione compatibilità lingue
+   ↓
+9. 🔍 RAG Query → Retrieval Chunks rilevanti
+   ↓
+10. 🧠 Valutazione AI (modello selezionato)
+    ↓
+11. 📊 Feedback Dettagliato + Analytics
+```
+
+## 📚 **API Endpoints (Aggiornati v1.7.0)**
+
+### 🤖 **Gestione Ollama** (NUOVO!)
+```http
+GET    /api/ollama/status              # Status servizio Ollama
+POST   /api/ollama/start               # Avvia Ollama
+GET    /api/ollama/models              # Lista modelli installati
+POST   /api/ollama/models/pull         # Scarica modello
+POST   /api/ollama/models/ensure       # Verifica disponibilità
+```
+
+### 🌍 **Gestione Lingue** (NUOVO!)
+```http
+GET    /api/languages                  # Lista lingue supportate
+POST   /api/languages/detect           # Rileva lingua da testo
+POST   /api/languages/validate         # Valida compatibilità
+```
+
+### 📄 **Documenti RAG**
+```http
+POST   /api/documents/upload           # Upload con rilevamento lingua
+GET    /api/documents/                 # Lista documenti
+GET    /api/documents/:id              # Dettagli documento
+DELETE /api/documents/:id              # Elimina documento
+POST   /api/documents/:id/search       # Similarity search
+```
+
+### 🎵 **Audio e Trascrizione**
+```http
+POST   /api/audio/upload               # Upload audio
+POST   /api/audio/:id/transcribe       # Trascrizione (con lingua)
+GET    /api/audio/:id                  # Dettagli registrazione
+DELETE /api/audio/:id                  # Elimina registrazione
+```
+
+### 🎯 **Valutazione AI**
+```http
+POST   /api/evaluations/evaluate       # Valutazione completa
+GET    /api/evaluations/health         # Health check AI
+```
+
+### 🔍 **Monitoring**
+```http
+GET    /api/health                     # Health check generale
+```
+
+## ⚙️ **Configurazione**
+
+### Backend Environment (apps/backend/.env)
+
+```env
+# Server
+NODE_ENV=development
+PORT=3001
+
+# Ollama (Gestito automaticamente!)
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=llama3.2:3b
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text
 
-# Vector Database (memory per sviluppo)
+# Vector Database
 VECTOR_DB_TYPE=memory
 EMBEDDING_DIMENSIONS=768
 
 # File Storage
 UPLOAD_DIR=./uploads
+MAX_FILE_SIZE=50
 
 # CORS
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:3002
 ```
 
-#### 5. **Avvia Applicazione**
+## 🔧 **Troubleshooting**
+
+### Ollama non si avvia
+
+**Problema**: `⚠️ Ollama service failed to start`
+
+**Soluzioni**:
 ```bash
-# Avvia entrambi i servizi contemporaneamente
-npm run dev
+# 1. Verifica installazione
+which ollama
 
-# Oppure separatamente:
-npm run dev:frontend    # Frontend su porta 3000
-npm run dev:backend     # Backend su porta 3002
-```
-
-### ✅ **Verifica Setup**
-1. **Frontend**: http://localhost:3000
-2. **Backend Health**: http://localhost:3002/api/health
-3. **Ollama Status**: http://localhost:11434/api/tags
-4. **Whisper Test**: `whisper --help` (deve mostrare help senza errori)
-
-### 🔧 **Troubleshooting Comuni**
-
-#### Errore EADDRINUSE (Porta già in uso)
-```bash
-# Il sistema include cleanup automatico, ma in caso di problemi:
-npm run restart        # Cleanup automatico e restart
-# oppure manualmente:
-npm run kill-ports     # Kill processi su porte 3000,3002
-```
-
-#### Problemi Microfono/Audio
-```bash
-# Se il test del microfono non funziona:
-# 1. Verifica permessi browser (icona microfono nella barra indirizzi)
-# 2. Controlla che il microfono sia collegato e funzionante
-# 3. Prova con un browser diverso (Chrome/Firefox/Safari)
-# 4. Verifica che nessun'altra app stia usando il microfono
-```
-
-#### Errore "Settings is not defined" o componenti non definiti
-```bash
-# Se vedi errori di componenti non definiti:
-# 1. Verifica che tutti gli import siano corretti
-# 2. Riavvia il dev server: npm run dev
-# 3. Pulisci cache: rm -rf .next && npm run dev
-```
-
-#### Errore Whisper SSL/Certificati
-```bash
-# Se Whisper non riesce a scaricare modelli:
-python3 -c "
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
-import whisper
-whisper.load_model('base')
-"
-```
-
-#### Ollama non risponde
-```bash
-# Riavvia Ollama
-pkill ollama
+# 2. Avvia manualmente
 ollama serve
 
-# Verifica modelli installati
-ollama list
-
-# Test connessione Ollama
-curl http://localhost:11434/api/tags
+# 3. Controlla log
+cat ~/.ollama/logs/server.log
 ```
 
-#### Problemi con il Feedback Analytics
-```bash
-# Se il sistema di feedback non mostra i dati:
-# 1. Verifica che Ollama sia in esecuzione
-# 2. Controlla che il modello LLM sia scaricato
-# 3. Verifica la connessione backend su porta 3002
-# 4. Controlla i log del backend per errori AI
-```
+### Modello non trovato
 
-## 🎯 **Funzionalità Avanzate Implementate**
+**Problema**: `Default model llama3.2:3b not found`
 
-### 🎤 **Test Microfono Professionale** (Nuovo in v1.6.0)
-Il sistema di test del microfono è stato completamente ridisegnato per offrire un'esperienza simile a Google Meet/Zoom:
+**Soluzioni**:
+1. **Dall'interfaccia**: Vai su `/upload` → Selettore modelli → Clicca "Scarica"
+2. **Da terminale**: `ollama pull llama3.2:3b`
 
-#### Caratteristiche Principali:
-- **Selezione Dispositivi**: Dropdown automatico di tutti i microfoni disponibili
-- **Visualizzazione Real-time**: Indicatori colorati di livello audio (rosso/giallo/verde)
-- **Gestione Permessi**: Richiesta automatica permessi con istruzioni chiare
-- **Feedback Visivo**: Barre di livello animate e indicatore percentuale
-- **Status Monitoring**: Stati chiari (Pronto/Test in Corso/Errore)
-- **Auto-cleanup**: Gestione automatica risorse audio e memory leak prevention
+### Rilevamento lingua errato
 
-#### Utilizzo:
-1. Accedi alla pagina [/microphone-test](http://localhost:3000/microphone-test)
-2. Consenti l'accesso al microfono quando richiesto
-3. Seleziona il dispositivo dal dropdown (se ne hai più di uno)
-4. Clicca "Inizia Test Audio" e parla normalmente
-5. Monitora i livelli colorati - l'ideale è nel verde (20-80%)
-6. Clicca "Test Completato" quando sei soddisfatto
+**Problema**: Lingua rilevata incorrettamente
 
-### 📊 **Sistema Feedback Avanzato** (Nuovo in v1.6.0)
-Dashboard analytics professionale con 5 tab specializzati per analisi complete:
+**Soluzioni**:
+1. **Disattiva "Auto"**: Click sul toggle Auto/Manuale
+2. **Seleziona manualmente**: Click sulla lingua corretta
+3. **Verifica documento**: Assicurati che il testo sia nella lingua aspettata
 
-#### Tab Disponibili:
-1. **📋 Overview**: Punteggi generali con grafici radar e indicatori di performance
-2. **📈 Detailed Analysis**: Breakdown dettagliato per ogni criterio di valutazione
-3. **🎯 Improvement Plan**: Piano di miglioramento personalizzato con azioni prioritarie
-4. **📊 Analytics**: Statistiche avanzate (varianza, mediana, range, trends)
-5. **🔍 RAG Context**: Visualizzazione chunks del documento utilizzati nell'analisi
-
-#### Metriche Calcolate:
-- **Statistical Analysis**: Media, mediana, varianza, deviazione standard
-- **Performance Range**: Range punteggi e consistency analysis
-- **Improvement Priorities**: Raccomandazioni basate su gap analysis
-- **Context Relevance**: Matching score tra presentazione e documento di riferimento
-
-## 🎯 **Funzionalità Complete Disponibili**
-
-### ✅ **Sistema RAG Completo**
-- **Upload Documenti**: PDF, DOCX, TXT con validazione e drag & drop
-- **Document Processing**: Parsing intelligente, chunking e generazione embeddings
-- **Vector Search**: Similarity search contestuale con Ollama e Nomic Embed
-- **Context Retrieval**: Recupero chunks rilevanti per valutazione RAG
-
-### ✅ **Test e Registrazione Audio Professionale**
-- **Microphone Test**: Test dispositivi con selezione microfono come Google Meet/Zoom
-- **Audio Level Monitoring**: Visualizzazione livelli real-time con indicatori colorati
-- **Device Management**: Enumerazione automatica dispositivi e gestione permessi
-- **Audio Recording**: Registrazione browser con waveform professional e controlli avanzati
-- **Speech-to-Text**: Trascrizione locale con Whisper (no API esterne)
-- **Audio Processing**: Gestione formati multipli, validazione e pulizia automatica
-
-### ✅ **Valutazione AI Avanzata con Analytics**
-- **Evaluation Engine**: Valutazione multi-criterio con Ollama LLM
-- **Advanced Scoring**: Accuracy, Clarity, Completeness, Coherence, Fluency con statistiche
-- **Professional Feedback**: Dashboard analytics con 5 tab specializzati
-- **Improvement Plans**: Piani di miglioramento personalizzati con priorità azioni
-- **Statistical Analysis**: Analisi varianza, mediana, range e performance trends
-- **RAG Context Visualization**: Visualizzazione chunks rilevanti utilizzati nell'analisi
-
-### ✅ **Sicurezza e Monitoring**
-- **Rate Limiting**: Limiti granulari per tipo di operazione
-- **Input Validation**: Validazione robusta con express-validator
-- **Security Headers**: Protezione completa con Helmet
-- **Structured Logging**: Logging professionale con Winston
-- **Health Checks**: Monitoring servizi AI e database
-
-## 📊 **Flusso Operativo Completo**
-
-### Pipeline Implementata 🚀
-```
-1. Upload Documento → Validazione → Parsing
-                                     ↓
-2. Chunking Intelligente → Embedding Generation (Ollama)
-                                     ↓
-3. Vector Storage → Similarity Index → Ready for Query
-                                     ↓
-4. Audio Recording → Local Transcription (Whisper)
-                                     ↓
-5. Context Retrieval → RAG Query → Relevant Chunks
-                                     ↓
-6. AI Evaluation (Ollama) → Multi-Criteria Scoring
-                                     ↓
-7. Detailed Feedback → Recommendations → Final Report
-```
-
-## ⚙️ **Configurazione Avanzata**
-
-### 🔧 **Backend Environment (apps/backend/.env)**
-
-#### Configurazione Base (Obbligatoria)
-```env
-# Server Configuration
-NODE_ENV=development
-PORT=3001
-
-# Ollama LLM Configuration
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3.2:3b
-OLLAMA_EMBEDDING_MODEL=nomic-embed-text
-OLLAMA_TIMEOUT=120000
-
-# Vector Database
-VECTOR_DB_TYPE=memory                # 'memory' o 'pinecone'
-EMBEDDING_DIMENSIONS=768
-EMBEDDING_BATCH_SIZE=5
-
-# Document Processing
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
-PRESERVE_SENTENCES=true
-
-# File Storage
-UPLOAD_DIR=./uploads
-MAX_FILE_SIZE=50
-```
-
-#### Configurazione Avanzata (Opzionale)
-```env
-# Whisper Local (Trascrizione)
-WHISPER_MODEL_PATH=./models/whisper
-WHISPER_MODEL=base
-WHISPER_LANGUAGE=auto
-
-# Security & CORS
-FRONTEND_URL=http://localhost:3000
-LOG_LEVEL=info
-
-# Rate Limiting (Personalizzabile)
-EVALUATION_RATE_LIMIT=20            # Valutazioni per ora
-UPLOAD_RATE_LIMIT=10                # Upload per ora
-TRANSCRIPTION_RATE_LIMIT=30         # Trascrizioni per ora
-
-# Pinecone (Solo se VECTOR_DB_TYPE=pinecone)
-PINECONE_API_KEY=your_pinecone_key
-PINECONE_ENVIRONMENT=gcp-starter
-PINECONE_INDEX_NAME=ai-speech-evaluator
-```
-
-### 🎚️ **Modelli Supportati**
-
-#### LLM Models (via Ollama)
-```bash
-# Modelli raccomandati per qualità/performance
-ollama pull llama3.2:3b         # Veloce, buona qualità
-ollama pull llama3.2:7b         # Migliore qualità, più lento
-ollama pull qwen2.5:7b          # Alternativa high-quality
-ollama pull mistral:7b          # Buono per evaluazioni
-```
-
-#### Embedding Models
-```bash
-ollama pull nomic-embed-text    # Raccomandato (768 dim)
-ollama pull mxbai-embed-large   # Alta qualità (1024 dim)
-```
-
-#### Whisper Models (Locale)
-- **tiny**: Velocissimo, qualità base
-- **base**: Bilanciato (raccomandato)
-- **small**: Qualità migliore
-- **medium**: Alta qualità, più lento
-
-## 📚 **API Endpoints Completi**
-
-### 📄 **Documenti RAG**
-```http
-POST   /api/documents/upload                    # Upload documento con processing
-GET    /api/documents/                          # Lista documenti
-GET    /api/documents/:id                       # Dettagli documento
-DELETE /api/documents/:id                       # Elimina documento
-GET    /api/documents/:id/status                # Stato processing
-POST   /api/documents/:id/process               # Riprocessa documento
-POST   /api/documents/:documentId/search        # Similarity search
-POST   /api/documents/:documentId/relevant-context  # Context per valutazione
-GET    /api/documents/:id/chunks                # Visualizza chunks
-GET    /api/documents/:id/metadata              # Metadata documento
-```
-
-### 🎵 **Audio e Trascrizione**
-```http
-POST   /api/audio/upload                        # Upload audio
-POST   /api/audio/:id/transcribe                # Trascrizione locale
-GET    /api/audio/:id                           # Dettagli registrazione
-DELETE /api/audio/:id                           # Elimina registrazione
-GET    /api/audio/document/:documentId          # Audio per documento
-GET    /api/audio/:id/status                    # Stato processing
-```
-
-### 🎯 **Valutazione AI**
-```http
-POST   /api/evaluations/evaluate                # Valutazione completa
-POST   /api/evaluations/quick                   # Valutazione rapida
-POST   /api/evaluations/detailed-feedback       # Feedback dettagliato
-POST   /api/evaluations/compare                 # Confronta presentazioni
-POST   /api/evaluations/full-analysis          # Analisi completa
-POST   /api/evaluations/batch                  # Valutazioni multiple
-GET    /api/evaluations/criteria               # Spiegazione criteri
-GET    /api/evaluations/health                 # Health check AI
-```
-
-### 🔍 **Monitoring e Health**
-```http
-GET    /api/health                             # Health check generale
-GET    /api/documents/health                   # Health check RAG
-GET    /api/evaluations/health                 # Health check AI
-```
-
-## 🧪 Testing (in configurazione)
+### Errore EADDRINUSE (Porta in uso)
 
 ```bash
-# Test suite completa (in sviluppo)
-npm run test
+# Cleanup automatico e restart
+npm run restart
 
-# Test coverage (in sviluppo)
-npm run test:coverage
-
-# Test watch mode (in sviluppo)
-npm run test:watch
+# O manualmente
+npm run kill-ports
+npm run dev
 ```
 
-## 📦 Deployment
+## 📈 **Aggiornamenti Recenti**
 
-### Docker (disponibile)
-```bash
-# Build immagini
-docker-compose build
+### ✅ **v1.7.0 - Gestione Intelligente AI e Multi-Lingua** (Ottobre 2024)
+- **🤖 Auto-Start Ollama**: Avvio automatico del servizio Ollama all'avvio dell'app
+- **🎛️ Model Manager UI**: Interfaccia grafica per gestire modelli Ollama
+- **📥 Model Download**: Download modelli con progress bar in tempo reale
+- **🌍 Language Auto-Detection**: Rilevamento automatico lingua documento
+- **🗣️ Multi-Language Support**: 10+ lingue con validazione compatibilità
+- **✅ Language Validation**: Warning per incompatibilità documento/audio
+- **🎨 Enhanced UI**: Selettori modelli e lingua integrati nel flusso
+- **📚 Complete Documentation**: Guide per Ollama e supporto lingue
 
-# Avvia servizi
-docker-compose up -d
+### ✅ **v1.6.0 - Sistema Professionale Completo** (Settembre 2024)
+- **🎤 Professional Microphone Test**: Test avanzato con selezione dispositivi
+- **📊 Advanced Feedback System**: Dashboard analytics con 5 tab specializzati
+- **🎯 Enhanced Audio Pipeline**: Visualizzazione livelli real-time
+- **📈 Statistical Analysis**: Analytics con calcoli varianza e trends
+
+### 🎯 **Roadmap Prossimi Aggiornamenti**
+- **🔄 Model Switching**: Cambio modello in tempo reale senza restart
+- **📊 Language Analytics**: Statistiche utilizzo lingue e confidenza
+- **🎙️ Language-Specific STT**: Ottimizzazioni Whisper per lingua specifica
+- **🌐 Custom Language Support**: Aggiunta lingue personalizzate
+- **📱 Mobile Optimization**: Ottimizzazione completa per dispositivi mobili
+- **🐳 Docker Deployment**: Container production-ready con auto-config
+- **👥 User Management**: Sistema autenticazione e profili utente
+
+## 📚 **Documentazione Aggiuntiva**
+
+- **[OLLAMA_SETUP.md](OLLAMA_SETUP.md)** - Guida completa setup e gestione Ollama
+- **[LANGUAGE_SUPPORT.md](LANGUAGE_SUPPORT.md)** - Supporto multi-lingua e casistiche
+- **[docs/](./docs/)** - Documentazione tecnica completa
+
+## 🆘 Supporto
+
+### Problemi o Domande
+- Apri un [Issue](https://github.com/simo-hue/AI-RAG-Tutor/issues)
+- Consulta la [documentazione](./docs/)
+- Verifica i file di setup: [OLLAMA_SETUP.md](OLLAMA_SETUP.md), [LANGUAGE_SUPPORT.md](LANGUAGE_SUPPORT.md)
+
+### Bug Reports Template
+
+Quando riporti un bug, includi:
+
+```markdown
+**Descrizione del problema:**
+[Descrizione dettagliata]
+
+**Environment:**
+- OS: [macOS 14.0 / Ubuntu 22.04 / Windows 11]
+- Node.js: [v18.17.0]
+- Python: [3.9.7]
+- Browser: [Chrome 117.0 / Firefox 118.0]
+- Ollama: [Installato? Versione?]
+
+**Modelli Ollama:**
+- Modelli installati: [llama3.2:3b, ...]
+- Modello selezionato: [llama3.2:3b]
+
+**Lingua:**
+- Lingua documento: [Italiano]
+- Lingua audio: [Italiano]
+- Rilevamento auto: [Sì/No]
+
+**Passi per riprodurre:**
+1. [Primo passo]
+2. [Secondo passo]
+3. [Errore]
+
+**Log Output:**
+```
+[Backend logs]
+[Frontend console]
+[Ollama logs se applicabile]
 ```
 
-### Produzione (in configurazione)
-```bash
-# Build ottimizzato (in sviluppo)
-npm run build
-
-# Avvia produzione (in sviluppo)
-npm run start
+**Screenshot:**
+[Se applicabile]
 ```
-
-## 🔍 Monitoring (in sviluppo)
-
-- **Logs**: Winston con rotazione automatica (in configurazione)
-- **Metrics**: Prometheus + Grafana ready (in sviluppo)
-- **Health Checks**: `/health` endpoint (in sviluppo)
-- **Error Tracking**: Strutturato per Sentry (in sviluppo)
 
 ## 🤝 Contribuire
 
@@ -492,116 +544,24 @@ npm run start
 
 Questo progetto è sotto licenza MIT. Vedi `LICENSE` per dettagli.
 
-## 📈 **Aggiornamenti Recenti**
+---
 
-### ✅ **v1.6.0 - Sistema Professionale Completo** (Settembre 2024)
-- **🎤 Professional Microphone Test**: Test microfono avanzato con selezione dispositivi come Google Meet/Zoom
-- **📊 Advanced Feedback System**: Dashboard analytics con 5 tab specializzati e piani miglioramento
-- **🎯 Enhanced Audio Pipeline**: Visualizzazione livelli real-time e gestione dispositivi automatica
-- **🛡️ Component Robustness**: Audit completo applicazione con correzione errori TypeScript/ESLint
-- **🎨 UI/UX Improvements**: Interfaccia ottimizzata con componenti professionali e cleanup automatico
-- **📈 Statistical Analysis**: Analytics avanzati con calcoli varianza, mediana e performance trends
-- **🔧 Code Quality**: Rimozione funzionalità obsolete e ottimizzazione architettura componenti
+## 🎉 **Pronto all'Uso!**
 
-### ✅ **v1.5.0 - Sistema Completamente Operativo** (Settembre 2024)
-- **🎯 Whisper Integration**: Configurato e testato OpenAI Whisper locale
-- **🔧 Automatic Port Management**: Sistema di cleanup automatico porte
-- **🎨 Enhanced UI**: Interface completa per valutazione con tabs e statistiche
-- **🚀 Real-time Processing**: Visualizzazione backend processing in tempo reale
-- **🛡️ Security Hardening**: Middleware di sicurezza completo
-- **📊 Comprehensive Analytics**: Dashboard statistiche avanzato
-- **✅ End-to-End Testing**: Pipeline completa testata e validata
+Con le nuove funzionalità v1.7.0, l'applicazione è **ancora più semplice da usare**:
 
-### 🎯 **Roadmap Prossimi Aggiornamenti**
-- **Database Persistence**: Integrazione PostgreSQL per storage permanente
-- **User Management**: Sistema di autenticazione e profili utente
-- **Batch Processing**: Valutazione multipla e confronto presentazioni
-- **Advanced Analytics**: Metriche di performance e trend analysis
-- **Mobile Responsive**: Ottimizzazione completa per dispositivi mobili
-- **Docker Deployment**: Container production-ready
-- **Export Features**: Esportazione report in PDF e statistiche CSV
-- **Real-time Collaboration**: Condivisione sessioni di valutazione
-- **Custom Models**: Supporto modelli LLM personalizzati
+1. ✅ **Installa Ollama** (una volta)
+2. ✅ **Installa Whisper** (una volta)
+3. ✅ **npm install** (una volta)
+4. 🚀 **npm run dev** (sempre)
 
-## ⚡ **Ottimizzazioni Performance**
+**Tutto il resto è automatico!** 🎯
 
-### 🚀 **Configurazioni Consigliate per Performance Ottimale**
+Il sistema:
+- Avvia Ollama per te
+- Rileva la lingua automaticamente
+- Scarica i modelli dall'interfaccia
+- Gestisce la compatibilità documento/audio
+- Fornisce feedback intelligente
 
-#### Hardware Minimo Raccomandato:
-- **CPU**: 4+ core (Intel i5/AMD Ryzen 5 o superiore)
-- **RAM**: 8GB+ (16GB raccomandato per modelli LLM più grandi)
-- **Storage**: SSD con 10GB+ spazio libero
-- **Audio**: Microfono USB dedicato o cuffie di qualità
-
-#### Ottimizzazioni Ollama:
-```bash
-# Per sistemi con GPU NVIDIA (opzionale)
-ollama pull llama3.2:3b-q8_0      # Versione quantizzata ad alta qualità
-ollama pull llama3.2:7b-q4_0      # Bilanciamento qualità/velocità
-
-# Per sistemi con RAM limitata
-ollama pull llama3.2:1b           # Modello più leggero
-```
-
-#### Ottimizzazioni Browser:
-```bash
-# Chrome flags per performance audio ottimale:
-# chrome://flags/#enable-experimental-web-platform-features
-# chrome://flags/#autoplay-policy (No user gesture required)
-```
-
-#### Monitoring Performance:
-- **Frontend**: Componenti React ottimizzati con useMemo/useCallback
-- **Audio Pipeline**: Cleanup automatico AudioContext per prevenire memory leaks
-- **AI Processing**: Timeout configurabili per evitare blocking
-- **Rate Limiting**: Limiti intelligenti per proteggere risorse sistema
-
-## 🆘 Supporto
-
-Per problemi o domande:
-- Apri un [Issue](https://github.com/simo-hue/AI-RAG-Tutor/issues)
-- Consulta la [documentazione](./docs/)
-- Contatta il team di sviluppo
-
-### 🐛 **Bug Reports**
-Quando riporti un bug, includi:
-1. **Sistema Operativo**: macOS/Linux/Windows + versione
-2. **Versioni Software**: Node.js, Python, npm, browser utilizzato
-3. **Log Output**: Output completo dei terminali frontend/backend
-4. **Passi per riprodurre**: Sequenza dettagliata del problema
-5. **File coinvolti**: Tipi di documenti, formati audio, dimensioni file
-6. **Errori Browser**: Console del browser (F12) per errori JavaScript
-7. **Configurazione**: File .env e configurazioni Ollama/Whisper
-8. **Dispositivi Audio**: Modello microfono e configurazione sistema
-
-### 📋 **Template Bug Report**
-```
-**Descrizione del problema:**
-[Descrizione dettagliata del bug]
-
-**Environment:**
-- OS: [macOS 14.0 / Ubuntu 22.04 / Windows 11]
-- Node.js: [v18.17.0]
-- Python: [3.9.7]
-- Browser: [Chrome 117.0 / Firefox 118.0]
-
-**Passi per riprodurre:**
-1. [Primo passo]
-2. [Secondo passo]
-3. [Errore si verifica qui]
-
-**Risultato atteso:**
-[Cosa dovrebbe succedere]
-
-**Risultato effettivo:**
-[Cosa succede invece]
-
-**Log Output:**
-[Output terminale backend]
-[Output terminale frontend]
-[Console browser (se applicabile)]
-
-**File di test:**
-[Tipo e dimensione documento]
-[Formato audio utilizzato]
-```
+**Zero configurazione manuale richiesta!** ✨

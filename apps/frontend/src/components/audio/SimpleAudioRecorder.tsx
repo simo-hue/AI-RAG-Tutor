@@ -27,6 +27,7 @@ interface SimpleAudioRecorderProps {
   maxDuration?: number; // in seconds
   className?: string;
   autoTranscribe?: boolean;
+  language?: string;
 }
 
 export const SimpleAudioRecorder = ({
@@ -35,7 +36,8 @@ export const SimpleAudioRecorder = ({
   onFeedbackRequest,
   maxDuration = 600, // 10 minutes default
   className,
-  autoTranscribe = true
+  autoTranscribe = true,
+  language = 'it'
 }: SimpleAudioRecorderProps) => {
   const {
     isRecording,

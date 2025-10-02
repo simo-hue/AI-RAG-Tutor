@@ -24,11 +24,18 @@ export interface ProcessedDocument {
   documentId: string;
   wordCount?: number;
   chunkCount?: number;
+  detectedLanguage?: {
+    code: string;
+    name: string;
+    confidence?: number;
+    detectionMethod: 'automatic' | 'manual';
+  };
 }
 
 interface DocumentUploadProps {
   onFileUpload?: (files: File[]) => void;
   onDocumentProcessed?: (document: ProcessedDocument) => void;
+  onDocumentTextExtracted?: (text: string) => void;
   maxFiles?: number;
   maxSize?: number; // in MB
   className?: string;
@@ -45,6 +52,7 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const DocumentUpload = ({
   onFileUpload,
   onDocumentProcessed,
+  onDocumentTextExtracted,
   maxFiles = 5,
   maxSize = 50,
   className
@@ -100,13 +108,21 @@ export const DocumentUpload = ({
       return updated;
     });
 
-    // Start real upload process for each file immediately with the file object
-    newFiles.forEach((newFile) => {
+    // Extract text from files for language detection
+    newFiles.forEach(async (newFile) => {
+      if (newFile.file.type === 'text/plain') {
+        try {
+          const text = await newFile.file.text();
+          onDocumentTextExtracted?.(text);
+        } catch (error) {
+          console.error('Failed to extract text from file:', error);
+        }
+      }
       uploadFileWithData(newFile);
     });
 
     onFileUpload?.(acceptedFiles);
-  }, [onFileUpload]);
+  }, [onFileUpload, onDocumentTextExtracted]);
 
   const uploadFileWithData = useCallback(async (uploadedFile: UploadedFile) => {
     if (process.env.NODE_ENV === 'development') {
@@ -174,11 +190,17 @@ export const DocumentUpload = ({
         file: uploadedFile.file,
         documentId: result.document.id,
         wordCount: result.document.wordCount,
-        chunkCount: result.document.chunkCount
+        chunkCount: result.document.chunkCount,
+        detectedLanguage: result.document.detectedLanguage
       };
 
       // Notifica il parent component che l'upload è completato
       onDocumentProcessed?.(processedDocument);
+
+      // Log della lingua rilevata
+      if (result.document.detectedLanguage && process.env.NODE_ENV === 'development') {
+        console.log('🌍 Document language detected:', result.document.detectedLanguage);
+      }
 
       if (process.env.NODE_ENV === 'development') {
         console.log('Document uploaded successfully:', result.document.id);

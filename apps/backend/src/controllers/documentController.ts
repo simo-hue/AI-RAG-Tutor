@@ -64,10 +64,10 @@ export const documentController = {
       console.log('🔍 Starting document upload and RAG processing...');
 
       // Prima processalo con il servizio RAG (mentre il file è ancora disponibile)
-      try {
-        const ragService = await RAGServiceManager.getInstance();
-        const ragDocumentService = new DocumentService(ragService);
+      const ragService = await RAGServiceManager.getInstance();
+      const ragDocumentService = new DocumentService(ragService);
 
+      try {
         // Usa il file caricato per processamento RAG prima che venga spostato
         const processingResult = await ragDocumentService.processDocument(req.file.path, documentId);
         console.log('🔍 RAG processing completed:', {
@@ -76,13 +76,29 @@ export const documentController = {
           wordCount: processingResult.wordCount
         });
 
-        // Poi carica il documento normalmente
-        const uploadResult = await documentService.uploadDocument(req.file);
+        // Poi carica il documento normalmente CON LO STESSO ID
+        const uploadResult = await documentService.uploadDocument(req.file, documentId);
         console.log('🔍 Document uploaded:', uploadResult.document.id);
 
         // Estrai le informazioni necessarie
         const document = uploadResult.document;
         const uploadProgress = uploadResult.uploadProgress;
+
+        // Rileva la lingua del documento
+        let detectedLanguage = null;
+        try {
+          const LanguageDetector = (await import('../utils/languageDetector')).default;
+          const languageInfo = LanguageDetector.detectFromText(document.content);
+          detectedLanguage = {
+            code: languageInfo.code,
+            name: languageInfo.name,
+            confidence: languageInfo.confidence,
+            detectionMethod: 'automatic' as const
+          };
+          console.log('🔍 Language detected:', detectedLanguage);
+        } catch (langError) {
+          console.warn('🔍 Language detection failed:', langError);
+        }
 
         // Risposta di successo con formato standardizzato
         res.status(201).json({
@@ -91,11 +107,12 @@ export const documentController = {
             document: {
               id: document.id,
               name: document.name,
-              content: '', // Non includiamo il contenuto completo nella risposta
+              content: document.content, // Includi il contenuto per il rilevamento lingua nel frontend
               type: document.type,
               uploadedAt: document.uploadedAt,
               wordCount: document.content.split(/\s+/).length,
-              chunkCount: processingResult.chunkCount, // Usa i dati dal processamento RAG
+              chunkCount: processingResult.chunkCount,
+              detectedLanguage: detectedLanguage
             },
             uploadProgress: {
               documentId: document.id,
@@ -108,31 +125,39 @@ export const documentController = {
         });
 
       } catch (ragError) {
-        console.error('🔍 RAG processing failed, but document was uploaded:', ragError);
-        // Non bloccare l'upload se il RAG fallisce
-        const document = uploadResult.document;
+        console.error('🔍 RAG processing failed:', ragError);
 
-        res.status(201).json({
-          success: true,
-          data: {
-            document: {
-              id: document.id,
-              name: document.name,
-              content: '',
-              type: document.type,
-              uploadedAt: document.uploadedAt,
-              wordCount: document.content.split(/\s+/).length,
-              chunkCount: 0,
+        // Prova comunque a caricare il documento
+        try {
+          const uploadResult = await documentService.uploadDocument(req.file, documentId);
+          const document = uploadResult.document;
+
+          res.status(201).json({
+            success: true,
+            data: {
+              document: {
+                id: document.id,
+                name: document.name,
+                content: document.content,
+                type: document.type,
+                uploadedAt: document.uploadedAt,
+                wordCount: document.content.split(/\s+/).length,
+                chunkCount: 0,
+                detectedLanguage: null
+              },
+              uploadProgress: {
+                documentId: document.id,
+                stage: 'complete' as const,
+                progress: 100,
+                message: 'Document uploaded successfully (RAG processing failed)'
+              }
             },
-            uploadProgress: {
-              documentId: document.id,
-              stage: 'complete' as const,
-              progress: 100,
-              message: 'Document uploaded successfully (RAG processing failed)'
-            }
-          },
-          message: 'Document uploaded successfully (RAG processing will be retried)',
-        });
+            message: 'Document uploaded successfully (RAG processing will be retried)',
+          });
+        } catch (uploadError) {
+          console.error('🔍 Both RAG and upload failed:', uploadError);
+          throw new AppError('Failed to upload and process document', 500);
+        }
       }
 
     } catch (error) {
