@@ -1,5 +1,26 @@
 import { APIResponse } from '@ai-speech-evaluator/shared';
 
+export interface DetailedAccuracyReport {
+  overallAccuracyScore: number;
+  totalStatements: number;
+  accurateStatements: number;
+  inaccurateStatements: number;
+  factChecks: Array<{
+    statement: string;
+    isAccurate: boolean;
+    confidence: number;
+    evidenceInDocument: string | null;
+    discrepancy: string | null;
+    severity: 'none' | 'minor' | 'moderate' | 'critical';
+  }>;
+  summary: {
+    criticalErrors: string[];
+    moderateErrors: string[];
+    minorErrors: string[];
+    strengths: string[];
+  };
+}
+
 export interface EvaluationResult {
   evaluation: {
     overallScore: number;
@@ -40,6 +61,7 @@ export interface EvaluationResult {
     combinedContext: string;
     totalScore: number;
   };
+  accuracyReport?: DetailedAccuracyReport;
   evaluationId: string;
 }
 
@@ -70,6 +92,7 @@ class EvaluationService {
     options?: {
       maxChunks?: number;
       detailedFeedback?: boolean;
+      detailedAccuracyCheck?: boolean;
       model?: string;
     }
   ): Promise<EvaluationResult> {
@@ -82,7 +105,11 @@ class EvaluationService {
       body: JSON.stringify({
         transcription,
         documentId,
-        ...options
+        options: {
+          maxRelevantChunks: options?.maxChunks,
+          detailedAccuracyCheck: options?.detailedAccuracyCheck,
+          model: options?.model,
+        }
       }),
     });
 

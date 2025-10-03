@@ -18,6 +18,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
     {
+      url: `${baseUrl}/pricing`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/pricing`,
+          en: `${baseUrl}/en/pricing`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/api-docs`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/api-docs`,
+          en: `${baseUrl}/en/api-docs`,
+        },
+      },
+    },
+    {
       url: `${baseUrl}/docs`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
@@ -30,6 +54,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
     {
+      url: `${baseUrl}/about`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/about`,
+          en: `${baseUrl}/en/about`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/contact`,
+          en: `${baseUrl}/en/contact`,
+        },
+      },
+    },
+    {
       url: `${baseUrl}/upload`,
       lastModified: currentDate,
       changeFrequency: 'weekly',
@@ -38,6 +86,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
         languages: {
           it: `${baseUrl}/it/upload`,
           en: `${baseUrl}/en/upload`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/microphone-test`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/microphone-test`,
+          en: `${baseUrl}/en/microphone-test`,
         },
       },
     },

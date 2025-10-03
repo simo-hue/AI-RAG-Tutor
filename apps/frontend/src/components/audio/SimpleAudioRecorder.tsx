@@ -251,17 +251,6 @@ export const SimpleAudioRecorder = ({
                 >
                   <Square className="w-5 h-5" />
                 </Button>
-                {onFeedbackRequest && transcription && (
-                  <Button
-                    onClick={onFeedbackRequest}
-                    variant="outline"
-                    size="lg"
-                    className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                  >
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    Feedback
-                  </Button>
-                )}
               </>
             )}
 

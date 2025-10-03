@@ -50,13 +50,20 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
   }
 
   const origin = req.headers.origin;
+
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (!origin && process.env.NODE_ENV === 'development') {
-    // Allow no-origin requests only in development (e.g., Postman, curl)
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  } else if (!allowedOrigins.includes(origin || '')) {
+  } else if (!origin) {
+    // Allow no-origin requests in development (e.g., Postman, curl, Next.js rewrites)
+    if (process.env.NODE_ENV === 'development') {
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3002');
+    } else {
+      // In production, still allow same-origin requests without explicit origin
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+  } else if (origin && !allowedOrigins.includes(origin)) {
     // Reject unauthorized origins
+    logger.warn('CORS blocked request from unauthorized origin', { origin, path: req.path });
     return res.status(403).json({
       success: false,
       error: 'Origin not allowed by CORS policy'

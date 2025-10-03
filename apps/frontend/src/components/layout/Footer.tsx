@@ -37,23 +37,28 @@ export const Footer = () => {
             <h4 className="text-white font-semibold mb-4">Prodotto</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#features" className="text-secondary-400 hover:text-white transition-colors duration-200">
+                <a href="/#features" className="text-secondary-400 hover:text-white transition-colors duration-200">
                   Features
                 </a>
               </li>
               <li>
-                <a href="#pricing" className="text-secondary-400 hover:text-white transition-colors duration-200">
+                <a href="/pricing" className="text-secondary-400 hover:text-white transition-colors duration-200">
                   Pricing
                 </a>
               </li>
               <li>
-                <a href="#docs" className="text-secondary-400 hover:text-white transition-colors duration-200">
+                <a href="/docs" className="text-secondary-400 hover:text-white transition-colors duration-200">
                   Documentazione
                 </a>
               </li>
               <li>
-                <a href="#api" className="text-secondary-400 hover:text-white transition-colors duration-200">
+                <a href="/api-docs" className="text-secondary-400 hover:text-white transition-colors duration-200">
                   API
+                </a>
+              </li>
+              <li>
+                <a href="/about" className="text-secondary-400 hover:text-white transition-colors duration-200">
+                  About
                 </a>
               </li>
             </ul>
@@ -76,15 +81,23 @@ export const Footer = () => {
               </li>
               <li>
                 <a
+                  href="/contact"
+                  className="text-secondary-400 hover:text-white transition-colors duration-200"
+                >
+                  Contattaci
+                </a>
+              </li>
+              <li>
+                <a
                   href="mailto:mattioli.simone.10@gmail.com"
                   className="text-secondary-400 hover:text-white transition-colors duration-200 flex items-center space-x-1"
                 >
-                  <span>Contatti</span>
+                  <span>Email</span>
                   <Mail className="w-3 h-3" />
                 </a>
               </li>
               <li>
-                <a href="#community" className="text-secondary-400 hover:text-white transition-colors duration-200">
+                <a href="/#community" className="text-secondary-400 hover:text-white transition-colors duration-200">
                   Community
                 </a>
               </li>

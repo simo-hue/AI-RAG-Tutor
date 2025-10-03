@@ -37,18 +37,32 @@ export const Header = () => {
               Features
             </Link>
             <Link
-              href="/#how-it-works"
+              href="/pricing"
               className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
-              aria-label="Impara come funziona il sistema di valutazione AI"
+              aria-label="Scopri i nostri piani e prezzi"
             >
-              Come Funziona
+              Pricing
+            </Link>
+            <Link
+              href="/api-docs"
+              className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
+              aria-label="Documentazione API REST"
+            >
+              API
             </Link>
             <Link
               href="/docs"
               className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
               aria-label="Leggi la documentazione completa e i tutorial"
             >
-              Documentazione
+              Docs
+            </Link>
+            <Link
+              href="/about"
+              className="text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
+              aria-label="Scopri di più sul progetto"
+            >
+              About
             </Link>
           </nav>
 
@@ -81,18 +95,39 @@ export const Header = () => {
               Features
             </Link>
             <Link
-              href="/#how-it-works"
+              href="/pricing"
               className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
-              Come Funziona
+              Pricing
+            </Link>
+            <Link
+              href="/api-docs"
+              className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              API
             </Link>
             <Link
               href="/docs"
               className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
-              Documentazione
+              Docs
+            </Link>
+            <Link
+              href="/about"
+              className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="block text-secondary-600 hover:text-primary-600 transition-colors duration-200 font-medium"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
             </Link>
             <div className="pt-2">
               <Link href="/upload">

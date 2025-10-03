@@ -277,6 +277,11 @@ export default function UploadPage() {
                                 <Badge variant="outline" size="sm" className="bg-success-50 text-success-700 border-success-200">
                                   {(doc.wordCount || 0).toLocaleString()} parole
                                 </Badge>
+                                {doc.detectedLanguage && (
+                                  <Badge variant="outline" size="sm" className="bg-primary-50 text-primary-700 border-primary-200">
+                                    {doc.detectedLanguage.name} ({Math.round((doc.detectedLanguage.confidence || 0) * 100)}%)
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>

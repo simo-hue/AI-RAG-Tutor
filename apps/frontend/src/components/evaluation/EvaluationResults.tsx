@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { EvaluationResult } from '@/services/evaluationService';
 import { EvaluationStatistics } from './EvaluationStatistics';
+import { AccuracyReport } from './AccuracyReport';
 
 interface EvaluationResultsProps {
   evaluationResult: EvaluationResult;
@@ -39,9 +40,9 @@ export const EvaluationResults = ({
   onRestart,
   className
 }: EvaluationResultsProps) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'statistics' | 'criteria' | 'context' | 'suggestions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'statistics' | 'criteria' | 'context' | 'accuracy' | 'suggestions'>('overview');
 
-  const { evaluation, contextUsed, evaluationId } = evaluationResult;
+  const { evaluation, contextUsed, accuracyReport, evaluationId } = evaluationResult;
 
   const criteriaData = [
     { name: 'Accuratezza', value: evaluation.criteria.accuracy, icon: Target, color: 'text-blue-600' },
@@ -143,12 +144,13 @@ export const EvaluationResults = ({
       </Card>
 
       {/* Navigation Tabs */}
-      <div className="flex space-x-1 bg-secondary-100 rounded-lg p-1">
+      <div className="flex space-x-1 bg-secondary-100 rounded-lg p-1 overflow-x-auto">
         {[
           { id: 'overview', label: 'Panoramica', icon: BarChart3 },
           { id: 'statistics', label: 'Statistiche', icon: Activity },
           { id: 'criteria', label: 'Criteri Dettagliati', icon: Target },
           { id: 'context', label: 'Contesto RAG', icon: Brain },
+          ...(accuracyReport ? [{ id: 'accuracy', label: 'Accuratezza Dettagliata', icon: Target }] : []),
           { id: 'suggestions', label: 'Suggerimenti', icon: TrendingUp }
         ].map((tab) => (
           <button
@@ -330,6 +332,10 @@ export const EvaluationResults = ({
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {activeTab === 'accuracy' && accuracyReport && (
+        <AccuracyReport accuracyReport={accuracyReport} />
       )}
 
       {activeTab === 'suggestions' && (

@@ -81,7 +81,9 @@ export class OllamaService {
     }
   }
 
-  async generateChat(prompt: string, systemPrompt?: string): Promise<string> {
+  async generateChat(prompt: string, systemPrompt?: string, model?: string): Promise<string> {
+    const modelToUse = model || evaluationConfig.model;
+
     try {
       const startTime = Date.now();
 
@@ -96,7 +98,7 @@ export class OllamaService {
       messages.push({ role: 'user', content: prompt });
 
       const response = await this.client.chat({
-        model: evaluationConfig.model,
+        model: modelToUse,
         messages,
         options: {
           temperature: evaluationConfig.temperature,
@@ -107,7 +109,7 @@ export class OllamaService {
 
       const duration = Date.now() - startTime;
       logger.info('Ollama chat generation completed', {
-        model: evaluationConfig.model,
+        model: modelToUse,
         duration: `${duration}ms`,
         promptLength: prompt.length,
         responseLength: response.message.content.length
@@ -117,7 +119,7 @@ export class OllamaService {
     } catch (error) {
       logger.error('Ollama chat generation failed', {
         error: error.message,
-        model: evaluationConfig.model,
+        model: modelToUse,
         promptLength: prompt.length
       });
       throw new Error(`Chat generation failed: ${error.message}`);

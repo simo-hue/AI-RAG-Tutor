@@ -34,6 +34,7 @@ export const evaluationController = {
         data: {
           evaluation: result.evaluation,
           contextUsed: result.contextUsed,
+          accuracyReport: result.accuracyReport, // Include detailed accuracy report if generated
           evaluationId: generateEvaluationId(),
         },
         message: 'Presentation evaluated successfully',
@@ -160,6 +161,7 @@ export const evaluationController = {
       const response = {
         evaluation: evaluationResult.evaluation,
         contextUsed: evaluationResult.contextUsed,
+        accuracyReport: evaluationResult.accuracyReport, // Include detailed accuracy report if generated
         evaluationId: generateEvaluationId(),
       };
 
@@ -224,6 +226,7 @@ export const evaluationController = {
             evaluationId: generateEvaluationId(),
             evaluation: result.evaluation,
             contextUsed: result.contextUsed,
+            accuracyReport: result.accuracyReport, // Include detailed accuracy report if generated
           });
         } catch (error) {
           errors.push({

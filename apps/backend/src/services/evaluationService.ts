@@ -3,6 +3,7 @@ import { evaluationConfig } from '../config/ragConfig';
 import { AppError } from '../middleware/errorHandler';
 import { DocumentService } from './ragService';
 import { logger } from '../utils/logger';
+import { AccuracyCheckService, DetailedAccuracyReport } from './accuracyCheckService';
 
 export class EvaluationServiceManager {
   private evaluationService: LocalEvaluationService | null = null;
@@ -25,14 +26,25 @@ export class EvaluationServiceManager {
     options?: {
       maxRelevantChunks?: number;
       minSimilarityScore?: number;
+      detailedAccuracyCheck?: boolean;
+      model?: string;
     }
   ): Promise<{
     evaluation: EvaluationResult;
     contextUsed: {
-      relevantChunks: number;
-      averageSimilarity: number;
-      combinedContextLength: number;
+      relevantChunks: Array<{
+        content: string;
+        score: number;
+        metadata: {
+          documentId: string;
+          chunkId: string;
+          chunkIndex: number;
+        };
+      }>;
+      combinedContext: string;
+      totalScore: number;
     };
+    accuracyReport?: DetailedAccuracyReport;
   }> {
     const startTime = Date.now();
 
@@ -134,7 +146,8 @@ export class EvaluationServiceManager {
       const evaluation = await evaluationService.evaluatePresentation(
         transcription,
         relevantChunks,
-        documentId
+        documentId,
+        options?.model  // Pass model parameter
       );
 
       const processingTime = Date.now() - startTime;
@@ -152,13 +165,52 @@ export class EvaluationServiceManager {
 
       console.log(`Evaluation completed for document ${documentId} in ${processingTime}ms`);
 
+      // NUEVO: Esegui accuracy check dettagliato se richiesto
+      let accuracyReport: DetailedAccuracyReport | undefined;
+      if (options?.detailedAccuracyCheck) {
+        try {
+          logger.info('🔍 Starting detailed accuracy check', { documentId, model: options?.model });
+          const accuracyService = await AccuracyCheckService.getInstance();
+          accuracyReport = await accuracyService.performDetailedAccuracyCheck(
+            transcription,
+            relevantChunks,
+            documentId,
+            options?.model  // Pass model parameter
+          );
+
+          // Sovrascrive l'accuracy score con quello dettagliato
+          evaluation.criteria.accuracy = accuracyReport.overallAccuracyScore;
+
+          // Ricalcola overall score
+          const criteriaValues = Object.values(evaluation.criteria);
+          evaluation.overallScore = Math.round(
+            criteriaValues.reduce((sum, val) => sum + val, 0) / criteriaValues.length
+          );
+
+          logger.info('✅ Detailed accuracy check completed', {
+            documentId,
+            newAccuracyScore: accuracyReport.overallAccuracyScore,
+            criticalErrors: accuracyReport.summary.criticalErrors.length,
+            inaccurateStatements: accuracyReport.inaccurateStatements
+          });
+
+        } catch (error) {
+          logger.error('Detailed accuracy check failed, using standard accuracy', {
+            documentId,
+            error: error.message
+          });
+          // Continua con accuracy standard se il check dettagliato fallisce
+        }
+      }
+
       return {
         evaluation,
         contextUsed: {
-          relevantChunks: relevantChunks.length,
-          averageSimilarity: contextResult.totalScore,
-          combinedContextLength: contextResult.combinedContext.length,
+          relevantChunks: relevantChunks,
+          combinedContext: contextResult.combinedContext,
+          totalScore: contextResult.totalScore,
         },
+        accuracyReport,
       };
 
     } catch (error) {

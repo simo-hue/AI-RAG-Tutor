@@ -14,6 +14,19 @@ const nextConfig = {
       },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'X-Requested-With',
+            value: 'XMLHttpRequest',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

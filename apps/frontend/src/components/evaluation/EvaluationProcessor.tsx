@@ -147,6 +147,7 @@ export const EvaluationProcessor = ({
         {
           maxChunks: 5,
           detailedFeedback: true,
+          detailedAccuracyCheck: true, // Enable statement-by-statement accuracy checking
           model: model
         }
       );
