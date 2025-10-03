@@ -192,8 +192,7 @@ export const validateAudioUpload = [
     .matches(/^doc_\d+_[a-z0-9]+$/)
     .withMessage('Invalid document ID format'),
   body('duration')
-    .notEmpty()
-    .withMessage('Duration is required')
+    .optional()
     .isFloat({ min: 0.1, max: 3600 })
     .withMessage('Duration must be between 0.1 and 3600 seconds'),
   handleValidationErrors,
@@ -272,27 +271,66 @@ export const validateFileUpload = (req: Request, res: Response, next: NextFuncti
 };
 
 function validateSingleFile(file: Express.Multer.File) {
-  // Dimensione massima: 50MB
-  const maxSize = 50 * 1024 * 1024;
+  // Dimensione massima: 100MB (aumentato per file audio)
+  const maxSize = 100 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new AppError(`File size too large: ${file.originalname}. Maximum size: 50MB`, 400);
+    throw new AppError(`File size too large: ${file.originalname}. Maximum size: 100MB`, 400);
   }
 
-  // Tipi di file consentiti
+  // Tipi di file consentiti - EXPANDED LIST
   const allowedMimeTypes = [
+    // Documents
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'text/plain',
+    // Audio - WAV
     'audio/wav',
+    'audio/wave',
+    'audio/x-wav',
+    // Audio - MP3
     'audio/mp3',
+    'audio/mpeg',
+    'audio/mpeg3',
+    'audio/x-mpeg-3',
+    // Audio - OGG
     'audio/ogg',
+    'audio/vorbis',
+    'audio/opus',
+    // Audio - WebM
     'audio/webm',
+    // Audio - M4A/AAC
     'audio/m4a',
+    'audio/x-m4a',
+    'audio/mp4',
     'audio/aac',
+    'audio/aacp',
+    'audio/x-aac',
+    // Audio - FLAC
+    'audio/flac',
+    'audio/x-flac',
+    // Audio - Other
+    'audio/amr',
+    'audio/3gpp',
+    'audio/3gpp2',
+    'application/octet-stream', // Generic binary - check extension
   ];
 
-  if (!allowedMimeTypes.includes(file.mimetype)) {
-    throw new AppError(`File type not allowed: ${file.originalname}`, 400);
+  // Check MIME type OR extension (fallback for generic MIME types)
+  const ext = require('path').extname(file.originalname).toLowerCase();
+  const allowedExtensions = [
+    '.pdf', '.docx', '.txt', // Documents
+    '.wav', '.mp3', '.ogg', '.opus', '.webm', // Audio
+    '.m4a', '.aac', '.flac', '.amr', '.3gp'
+  ];
+
+  const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
+  const extensionValid = allowedExtensions.includes(ext);
+
+  if (!mimeTypeValid && !extensionValid) {
+    throw new AppError(
+      `File type not allowed: ${file.originalname}. MIME: ${file.mimetype}, Extension: ${ext}`,
+      400
+    );
   }
 
   // Validazione nome file

@@ -11,18 +11,14 @@ export const audioController = {
 
       const { documentId, duration } = req.body;
 
-      if (!documentId) {
-        throw new AppError('Document ID is required', 400);
-      }
-
-      if (!duration || isNaN(parseFloat(duration))) {
-        throw new AppError('Valid duration is required', 400);
-      }
+      // documentId is now optional - if not provided, creates a standalone audio record
+      // duration is also optional - can be extracted from file metadata
+      const parsedDuration = duration ? parseFloat(duration) : 0;
 
       const result = await audioService.uploadAudio(
         req.file,
-        documentId,
-        parseFloat(duration)
+        documentId || null,
+        parsedDuration
       );
 
       res.status(201).json({

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Mic,
   MicOff,
@@ -15,9 +15,11 @@ import {
   Settings,
   ChevronDown,
   MessageSquare,
+  Upload,
 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Badge, Progress } from '@/components/ui';
 import { useSimpleAudioRecorder, AudioDevice } from '@/hooks/useSimpleAudioRecorder';
+import { AudioFileUploader } from './AudioFileUploader';
 import { cn } from '@/utils/cn';
 
 interface SimpleAudioRecorderProps {
@@ -39,6 +41,8 @@ export const SimpleAudioRecorder = ({
   autoTranscribe = true,
   language = 'it'
 }: SimpleAudioRecorderProps) => {
+  const [mode, setMode] = useState<'record' | 'upload'>('record');
+
   const {
     isRecording,
     isPaused,
@@ -132,25 +136,68 @@ export const SimpleAudioRecorder = ({
                 ? 'bg-error-100 text-error-600 animate-pulse'
                 : 'bg-primary-100 text-primary-600'
             )}>
-              {isRecording ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              {mode === 'upload' ? <Upload className="w-5 h-5" /> : isRecording ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
             </div>
             <div>
               <CardTitle>Registrazione Vocale</CardTitle>
               <p className="text-sm text-secondary-600">
-                Registrazione e trascrizione in tempo reale (Italiano)
+                {mode === 'upload' ? 'Carica un file audio esistente' : 'Registrazione e trascrizione in tempo reale (Italiano)'}
               </p>
             </div>
           </div>
-          <Badge variant={status.variant} size="sm">
-            {status.text}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            {/* Mode Toggle */}
+            <div className="flex items-center bg-secondary-100 rounded-lg p-1">
+              <Button
+                variant={mode === 'record' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setMode('record')}
+                className="text-xs h-8"
+              >
+                <Mic className="w-3 h-3 mr-1" />
+                Registra
+              </Button>
+              <Button
+                variant={mode === 'upload' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setMode('upload')}
+                className="text-xs h-8"
+              >
+                <Upload className="w-3 h-3 mr-1" />
+                Carica
+              </Button>
+            </div>
+            <Badge variant={status.variant} size="sm">
+              {status.text}
+            </Badge>
+          </div>
         </div>
       </CardHeader>
 
       <CardContent>
         <div className="space-y-6">
-          {/* Progress Bar */}
-          <div className="space-y-2">
+          {/* Upload Mode */}
+          {mode === 'upload' && (
+            <AudioFileUploader
+              onFileSelect={(file) => {
+                console.log('File selected:', file.name);
+              }}
+              onTranscriptionComplete={(text) => {
+                onTranscriptionComplete?.(text);
+              }}
+              onError={(err) => {
+                console.error('Upload error:', err);
+              }}
+              language={language}
+              maxSize={100}
+            />
+          )}
+
+          {/* Record Mode */}
+          {mode === 'record' && (
+            <>
+              {/* Progress Bar */}
+              <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-secondary-700">
                 Progresso
@@ -449,13 +496,15 @@ export const SimpleAudioRecorder = ({
             </div>
           )}
 
-          {/* Info */}
-          <div className="text-center">
-            <p className="text-xs text-secondary-500">
-              Parla chiaramente in italiano per una migliore trascrizione.
-              Il riconoscimento vocale funziona in tempo reale.
-            </p>
-          </div>
+              {/* Info */}
+              <div className="text-center">
+                <p className="text-xs text-secondary-500">
+                  Parla chiaramente in italiano per una migliore trascrizione.
+                  Il riconoscimento vocale funziona in tempo reale.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

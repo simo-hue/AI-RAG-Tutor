@@ -48,9 +48,6 @@ export const OllamaModelSelector = ({
 
   useEffect(() => {
     checkStatus();
-    // Auto-refresh status every 5 seconds to detect changes
-    const interval = setInterval(checkStatus, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const checkStatus = async () => {
@@ -125,17 +122,11 @@ export const OllamaModelSelector = ({
       if (modelsData.success && modelsData.data?.models) {
         setModels(modelsData.data.models);
 
-        // Auto-select first model if current selection is not installed
-        if (modelsData.data.models.length > 0) {
-          const currentModelInstalled = modelsData.data.models.some(
-            (m: OllamaModel) => m.name === selectedModel || m.name.startsWith(selectedModel.split(':')[0])
-          );
-
-          if (!currentModelInstalled) {
-            const firstModel = modelsData.data.models[0].name;
-            setSelectedModel(firstModel);
-            onModelSelect?.(firstModel);
-          }
+        // Only auto-select if no model is currently selected
+        if (modelsData.data.models.length > 0 && !selectedModel) {
+          const firstModel = modelsData.data.models[0].name;
+          setSelectedModel(firstModel);
+          onModelSelect?.(firstModel);
         }
       }
     } catch (err) {
@@ -434,7 +425,7 @@ export const OllamaModelSelector = ({
 
                       <Button
                         size="sm"
-                        variant={isSelected ? 'default' : 'outline'}
+                        variant={isSelected ? 'primary' : 'outline'}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleModelSelect(model.name);

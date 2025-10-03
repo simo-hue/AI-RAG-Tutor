@@ -29,20 +29,78 @@ const audioStorage = multer.diskStorage({
 });
 
 const audioFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  // Log incoming file details for debugging
+  console.log('🔍 Audio upload attempt:', {
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size
+  });
+
+  // Expanded list of audio MIME types to support more formats
   const allowedTypes = [
+    // WAV formats
     'audio/wav',
+    'audio/wave',
+    'audio/x-wav',
+    // MP3 formats
     'audio/mp3',
+    'audio/mpeg',
+    'audio/mpeg3',
+    'audio/x-mpeg-3',
+    // OGG formats
     'audio/ogg',
+    'audio/vorbis',
+    'audio/opus',
+    // WebM
     'audio/webm',
+    // M4A/AAC formats (most common issue)
     'audio/m4a',
-    'audio/aac'
+    'audio/x-m4a',
+    'audio/mp4',
+    'audio/aac',
+    'audio/aacp',
+    'audio/x-aac',
+    // FLAC
+    'audio/flac',
+    'audio/x-flac',
+    // Other common formats
+    'audio/amr',
+    'audio/3gpp',
+    'audio/3gpp2',
+    'application/octet-stream', // Generic binary - check extension
   ];
 
-  if (allowedTypes.includes(file.mimetype)) {
+  // Get file extension
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExtensions = [
+    '.wav', '.mp3', '.ogg', '.opus', '.webm',
+    '.m4a', '.aac', '.flac', '.amr', '.3gp'
+  ];
+
+  // Check MIME type
+  const mimeTypeValid = allowedTypes.includes(file.mimetype);
+  console.log('✓ MIME type check:', { mimetype: file.mimetype, valid: mimeTypeValid });
+
+  if (mimeTypeValid) {
+    console.log('✅ File accepted by MIME type');
     cb(null, true);
-  } else {
-    cb(new Error('File type not allowed. Please upload audio files only.'));
+    return;
   }
+
+  // If MIME type is generic or unknown, check file extension
+  const extensionValid = allowedExtensions.includes(ext);
+  console.log('✓ Extension check:', { extension: ext, valid: extensionValid });
+
+  if (extensionValid) {
+    console.log('✅ File accepted by extension');
+    cb(null, true);
+    return;
+  }
+
+  // Reject file
+  const errorMsg = `File type not allowed: ${file.originalname}. MIME type: ${file.mimetype}, Extension: ${ext}`;
+  console.log('❌ File rejected:', errorMsg);
+  cb(new Error(errorMsg));
 };
 
 const uploadAudio = multer({

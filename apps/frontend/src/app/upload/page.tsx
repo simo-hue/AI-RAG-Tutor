@@ -25,7 +25,7 @@ export default function UploadPage() {
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [evaluationError, setEvaluationError] = useState<string | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string>('llama3.2:3b');
+  const [selectedModel, setSelectedModel] = useState<string>('llama3:latest');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('it');
   const [documentText, setDocumentText] = useState<string>('');
 
@@ -562,7 +562,7 @@ export default function UploadPage() {
                   <span className="text-sm font-medium text-success-800">Valutazione AI</span>
                 </div>
                 <p className="text-xs text-success-700">
-                  • Ollama LLM (llama3.2:3b)<br />
+                  • Ollama LLM locale<br />
                   • Analisi completamente locale<br />
                   • Privacy garantita al 100%
                 </p>

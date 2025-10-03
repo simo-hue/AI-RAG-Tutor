@@ -10,12 +10,12 @@ import { logger } from '../utils/logger';
 const audioRecordings: AudioRecording[] = [];
 
 export const audioService = {
-  async uploadAudio(file: Express.Multer.File, documentId: string, duration: number) {
+  async uploadAudio(file: Express.Multer.File, documentId: string | null, duration: number) {
     try {
       // Create audio recording object
       const audioRecording: AudioRecording = {
         id: generateId(),
-        documentId,
+        documentId: documentId || undefined,
         audioUrl: `/uploads/audio/${file.filename}`,
         duration,
         recordedAt: new Date(),

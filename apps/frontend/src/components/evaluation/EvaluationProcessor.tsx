@@ -90,7 +90,7 @@ export const EvaluationProcessor = ({
   documentId,
   onEvaluationComplete,
   onError,
-  model = 'llama3.2:3b',
+  model = 'llama3:latest',
   className
 }: EvaluationProcessorProps) => {
   const [currentStage, setCurrentStage] = useState<ProcessingStage>('initializing');
@@ -233,7 +233,7 @@ export const EvaluationProcessor = ({
       case 'initializing':
         setCurrentDetails('🔍 Verifica connettività Ollama...');
         await new Promise(resolve => setTimeout(resolve, 800));
-        setCurrentDetails('📊 Controllo modelli disponibili (llama3.2:3b)...');
+        setCurrentDetails('📊 Controllo modelli disponibili...');
         await new Promise(resolve => setTimeout(resolve, 700));
         setCurrentDetails('⚡ Inizializzazione sistema RAG e vector database...');
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -277,7 +277,7 @@ export const EvaluationProcessor = ({
         break;
 
       case 'finalizing':
-        setCurrentDetails('🚀 Invio prompt al modello Ollama (llama3.2:3b)...');
+        setCurrentDetails('🚀 Invio prompt al modello Ollama...');
         await new Promise(resolve => setTimeout(resolve, 2200));
         setCurrentDetails('🎯 Generazione criteri di valutazione (5 dimensioni)...');
         await new Promise(resolve => setTimeout(resolve, 2000));
