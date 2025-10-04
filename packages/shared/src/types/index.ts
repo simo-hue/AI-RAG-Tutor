@@ -154,6 +154,24 @@ export interface SpeakingPerformance {
   };
 }
 
+export interface ConceptCoherenceAnalysis {
+  overallCoherence: number; // 0-100: coerenza concettuale complessiva
+  matchedConcepts: number; // Concetti del documento presenti
+  missingConcepts: string[]; // Concetti del documento non menzionati
+  extraConcepts: string[]; // Concetti aggiunti non nel documento
+  distortedConcepts: Array<{
+    documentConcept: string;
+    transcriptionConcept: string;
+    distortion: number;
+  }>;
+  statistics: {
+    totalDocumentConcepts: number;
+    coveragePercentage: number; // % concetti del documento coperti
+    fidelityScore: number; // Score di fedeltà concettuale
+    averageSimilarity: number; // Similarità semantica media
+  };
+}
+
 export interface Evaluation {
   id: string;
   audioRecordingId: string;
@@ -168,6 +186,7 @@ export interface Evaluation {
   feedback: string;
   suggestedImprovements: string[];
   evaluatedAt: Date;
+  conceptCoherence?: ConceptCoherenceAnalysis; // Analisi concettuale opzionale
 }
 
 export interface CriterionScore {

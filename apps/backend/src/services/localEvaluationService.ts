@@ -3,6 +3,7 @@ import { evaluationConfig } from '../config/ragConfig';
 import { AppError } from '../middleware/errorHandler';
 import { logger } from '../utils/logger';
 import { DocumentChunk } from '@ai-speech-evaluator/shared';
+import { ConceptCoherenceService, ConceptCoherenceResult } from './conceptCoherenceService';
 
 export interface EvaluationCriteria {
   accuracy: number;
@@ -32,6 +33,7 @@ export interface EvaluationResult {
       contextLength: number;
     };
   };
+  conceptCoherence?: ConceptCoherenceResult; // Analisi concettuale dettagliata
 }
 
 export class LocalEvaluationService {
@@ -84,7 +86,7 @@ export class LocalEvaluationService {
           index: idx + 1,
           score: chunk.score.toFixed(3),
           contentPreview: chunk.content.substring(0, 100) + '...',
-          chunkId: chunk.metadata.chunkId,
+          section: chunk.metadata.section,
           length: chunk.content.length
         })),
         transcriptionLength: transcription.length,
@@ -126,6 +128,139 @@ export class LocalEvaluationService {
       // Parse del risultato
       const evaluation = this.parseEvaluationResult(rawEvaluation, documentId, transcription.length, relevantChunks.length);
 
+      // 🧠 ANALISI CONCETTUALE SEMANTICA
+      // Analizza la coerenza concettuale tra trascrizione e documento
+      logger.info('🧠 Starting concept coherence analysis...');
+      try {
+        const conceptService = await ConceptCoherenceService.getInstance();
+        const conceptAnalysis = await conceptService.analyzeConceptCoherence(
+          transcription,
+          relevantChunks,
+          modelToUse
+        );
+
+        evaluation.conceptCoherence = conceptAnalysis;
+
+        // AGGIUSTA IL PUNTEGGIO DI ACCURATEZZA in base alla coerenza concettuale
+        // Se i concetti non coincidono, abbassa l'accuratezza
+        const conceptFidelity = conceptAnalysis.overallCoherence;
+
+        logger.info('📊 Concept analysis impact on accuracy', {
+          originalAccuracy: evaluation.criteria.accuracy,
+          conceptFidelity,
+          extraConcepts: conceptAnalysis.extraConcepts.length,
+          missingConcepts: conceptAnalysis.missingConcepts.length,
+          distortedConcepts: conceptAnalysis.distortedConcepts.length
+        });
+
+        // SISTEMA DI PENALIZZAZIONE RIGOROSO basato su metriche oggettive
+        const { statistics, extraConcepts, missingConcepts, distortedConcepts } = conceptAnalysis;
+
+        // Calcola penalità basate su metriche concrete
+        let forcedAccuracy = 100;
+
+        // PENALITÀ 1: Concetti mancanti (non ha parlato di cose importanti del documento)
+        const missingPenalty = (missingConcepts.length / statistics.totalDocumentConcepts) * 60;
+        forcedAccuracy -= missingPenalty;
+
+        // PENALITÀ 2: Concetti extra (ha aggiunto cose NON nel documento)
+        // Questa è la penalità PIÙ SEVERA perché indica che sta inventando
+        const extraPenalty = extraConcepts.length * 15; // -15 punti per ogni concetto extra
+        forcedAccuracy -= extraPenalty;
+
+        // PENALITÀ 3: Concetti distorti (ha parlato di cose del documento ma in modo sbagliato)
+        const distortionPenalty = distortedConcepts.reduce((sum, d) => sum + (d.distortion * 10), 0);
+        forcedAccuracy -= distortionPenalty;
+
+        // BONUS: Coverage alta
+        if (statistics.coveragePercentage > 90) {
+          forcedAccuracy += 5;
+        }
+
+        // Limita tra 0 e 100
+        forcedAccuracy = Math.max(0, Math.min(100, forcedAccuracy));
+
+        logger.warn('🎯 FORCED ACCURACY CALCULATION', {
+          originalLLMAccuracy: evaluation.criteria.accuracy,
+          missingConcepts: missingConcepts.length,
+          missingPenalty: `-${missingPenalty.toFixed(1)}`,
+          extraConcepts: extraConcepts.length,
+          extraPenalty: `-${extraPenalty.toFixed(1)}`,
+          distortedConcepts: distortedConcepts.length,
+          distortionPenalty: `-${distortionPenalty.toFixed(1)}`,
+          calculatedAccuracy: forcedAccuracy,
+          conceptFidelity
+        });
+
+        // USA IL PUNTEGGIO PIÙ BASSO tra quello dell'LLM e quello calcolato
+        // Questo previene che l'LLM dia punteggi troppo alti
+        const finalAccuracy = Math.min(evaluation.criteria.accuracy, forcedAccuracy);
+
+        const originalAccuracy = evaluation.criteria.accuracy;
+        evaluation.criteria.accuracy = finalAccuracy;
+
+        logger.warn(`🔴 ACCURACY ADJUSTED: ${finalAccuracy.toFixed(1)} (LLM said ${originalAccuracy.toFixed(1)}, forced calculation ${forcedAccuracy.toFixed(1)})`);
+
+        // AGGIUSTA ANCHE COMPLETENESS basata sulla coverage dei concetti
+        // Se mancano concetti, la completeness DEVE essere bassa
+        const forcedCompleteness = statistics.coveragePercentage;
+        const originalCompleteness = evaluation.criteria.completeness;
+        evaluation.criteria.completeness = Math.min(originalCompleteness, forcedCompleteness);
+
+        if (originalCompleteness !== evaluation.criteria.completeness) {
+          logger.warn(`🔴 COMPLETENESS ADJUSTED: ${evaluation.criteria.completeness.toFixed(1)} (LLM said ${originalCompleteness.toFixed(1)}, but coverage is only ${forcedCompleteness.toFixed(1)}%)`);
+        }
+
+        // Aggiungi feedback sui concetti mancanti/extra con dettagli
+        if (conceptAnalysis.missingConcepts.length > 0) {
+          const missingList = conceptAnalysis.missingConcepts.slice(0, 5).join(', ');
+          const moreCount = conceptAnalysis.missingConcepts.length > 5 ? ` (+${conceptAnalysis.missingConcepts.length - 5} altri)` : '';
+          evaluation.feedback.improvements.push(
+            `⚠️ **CONCETTI MANCANTI** (${conceptAnalysis.missingConcepts.length}/${statistics.totalDocumentConcepts}): Non hai menzionato: ${missingList}${moreCount}`
+          );
+        }
+
+        if (conceptAnalysis.extraConcepts.length > 0) {
+          const extraList = conceptAnalysis.extraConcepts.slice(0, 5).join(', ');
+          const moreCount = conceptAnalysis.extraConcepts.length > 5 ? ` (+${conceptAnalysis.extraConcepts.length - 5} altri)` : '';
+          evaluation.feedback.improvements.push(
+            `❌ **CONCETTI NON NEL DOCUMENTO** (${conceptAnalysis.extraConcepts.length}): Hai aggiunto concetti esterni: ${extraList}${moreCount}. ATTENZIONE: Devi parlare SOLO di ciò che è nel documento.`
+          );
+        }
+
+        if (conceptAnalysis.distortedConcepts.length > 0) {
+          const distortedList = conceptAnalysis.distortedConcepts
+            .slice(0, 3)
+            .map(d => `"${d.documentConcept}" → "${d.transcriptionConcept}"`)
+            .join(', ');
+          evaluation.feedback.improvements.push(
+            `⚠️ **CONCETTI DISTORTI** (${conceptAnalysis.distortedConcepts.length}): Hai modificato i concetti rispetto al documento: ${distortedList}. Mantieni maggiore fedeltà al contenuto originale.`
+          );
+        }
+
+        // Ricalcola overall score con i nuovi valori corretti
+        const scores = [
+          evaluation.criteria.accuracy,
+          evaluation.criteria.clarity,
+          evaluation.criteria.completeness,
+          evaluation.criteria.coherence,
+          evaluation.criteria.fluency
+        ];
+        evaluation.overallScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+        logger.info('✅ Concept coherence analysis completed', {
+          conceptFidelity,
+          adjustedAccuracy: evaluation.criteria.accuracy,
+          adjustedOverallScore: evaluation.overallScore
+        });
+
+      } catch (conceptError) {
+        logger.error('❌ Concept coherence analysis failed, continuing without it', {
+          error: conceptError instanceof Error ? conceptError.message : 'Unknown'
+        });
+        // Continua senza l'analisi concettuale se fallisce
+      }
+
       const processingTime = Date.now() - startTime;
       evaluation.metadata.processingTime = processingTime;
 
@@ -137,6 +272,7 @@ export class LocalEvaluationService {
         transcriptionLength: transcription.length,
         chunksUsed: relevantChunks.length,
         processingTime: `${processingTime}ms`,
+        conceptCoherence: evaluation.conceptCoherence?.overallCoherence,
         evaluationSummary: {
           strengths: evaluation.feedback.strengths.length,
           improvements: evaluation.feedback.improvements.length,
@@ -267,12 +403,12 @@ export class LocalEvaluationService {
 
 CRITERI DI VALUTAZIONE (0-100):
 
-1. **ACCURATEZZA**: Fedeltà al documento fornito (NON alla realtà)
-   - 90-100: Tutte le informazioni sono presenti nel documento, zero aggiunte esterne
-   - 70-89: Prevalentemente fedele al documento, minime imprecisioni
-   - 50-69: Alcune informazioni aggiunte non presenti nel documento
-   - 30-49: Molte informazioni esterne o contraddizioni col documento
-   - 0-29: Contenuto prevalentemente NON presente nel documento
+1. **ACCURATEZZA**: Fedeltà RIGOROSA al documento fornito (NON alla realtà)
+   - 90-100: TUTTE le informazioni sono ESATTAMENTE presenti nel documento, ZERO aggiunte esterne, ZERO modifiche
+   - 70-89: Fedele al documento ma con 1-2 piccole imprecisioni o riformulazioni minori
+   - 50-69: Informazioni corrette ma con aggiunte non presenti nel documento o omissioni significative
+   - 30-49: Numerose informazioni esterne, contraddizioni o distorsioni del contenuto del documento
+   - 0-29: Contenuto prevalentemente NON presente nel documento o completamente inventato
 
 2. **CHIAREZZA**: Comprensibilità dell'esposizione
    - 90-100: Esposizione cristallina, linguaggio appropriato
@@ -383,11 +519,16 @@ ${transcription}
 
 📋 ISTRUZIONI DI VALUTAZIONE:
 
-1. **ACCURATEZZA (0-100)** - Fedeltà ESCLUSIVA al documento:
-   • Ogni informazione nella presentazione DEVE essere nel documento
-   • Se c'è UN SOLO fatto non presente nel documento → max 70/100
-   • Se la presentazione aggiunge conoscenze esterne → PENALIZZA fortemente
-   • Se la presentazione "corregge" il documento → è UN ERRORE, penalizza
+1. **ACCURATEZZA (0-100)** - Fedeltà RIGOROSA ed ESCLUSIVA al documento:
+   • OGNI SINGOLA informazione nella presentazione DEVE essere ESATTAMENTE nel documento
+   • Se c'è anche UN SOLO fatto/concetto/numero NON presente nel documento → max 60/100
+   • Se ci sono 2-3 fatti non presenti nel documento → max 40/100
+   • Se ci sono molti fatti non presenti o inventati → max 20/100
+   • Se la presentazione aggiunge conoscenze esterne (anche se vere) → PENALIZZA SEVERAMENTE
+   • Se la presentazione "corregge" errori del documento → è UN GRAVE ERRORE, penalizza fortemente
+   • Se la presentazione contraddice il documento su QUALSIASI punto → max 30/100
+
+   ⚠️ SEVERITÀ MASSIMA: Sii ESTREMAMENTE rigoroso nel valutare l'accuratezza. Il documento è l'UNICA verità.
 
 2. **CHIAREZZA (0-100)** - Comprensibilità:
    • Quanto è chiara l'esposizione del contenuto del documento
@@ -405,10 +546,33 @@ ${transcription}
    • Fluidità del parlato
    • Assenza di interruzioni eccessive
 
-⚠️ ATTENZIONE PARTICOLARE:
-- Se trovi informazioni VERE ma NON NEL DOCUMENTO → PENALIZZA l'accuratezza
-- Il documento può contenere errori: la presentazione DEVE ripeterli fedelmente per alta accuratezza
-- Non lodare "approfondimenti" o "integrazioni" - sono errori se non nel documento
+⚠️ SEVERITÀ ESTREMA - LEGGI ATTENTAMENTE:
+
+🔴 PENALIZZAZIONI SEVERE per l'accuratezza:
+- Anche UNA SOLA informazione non nel documento → MASSIMO 60/100 in accuratezza
+- Due-tre informazioni non nel documento → MASSIMO 40/100 in accuratezza
+- Molte informazioni inventate/esterne → MASSIMO 20/100 in accuratezza
+- Contraddizioni con il documento → MASSIMO 30/100 in accuratezza
+
+🔴 ESEMPI di cosa PENALIZZARE SEVERAMENTE:
+- Presentazione: "La Terra è blu" quando documento dice "La Terra è rossa" → ERRORE GRAVE
+- Presentazione aggiunge dettagli non nel documento (anche se veri) → ERRORE
+- Presentazione spiega meglio/corregge il documento → ERRORE (deve ripetere fedelmente)
+- Presentazione usa sinonimi che cambiano significato → PENALIZZA
+- Presentazione interpreta invece di citare → PENALIZZA
+
+✅ ALTA accuratezza SOLO se:
+- Riproduzione ESATTA del contenuto del documento
+- ZERO aggiunte, ZERO interpretazioni, ZERO correzioni
+- Fedeltà letterale ai fatti presentati nel documento
+
+📊 METODO DI VALUTAZIONE:
+1. Identifica OGNI affermazione nella presentazione
+2. Per CIASCUNA affermazione, verifica se è ESATTAMENTE nel documento
+3. Conta le affermazioni NON presenti nel documento
+4. Applica le penalizzazioni sopra indicate
+
+🚨 SII RIGOROSO: In caso di dubbio, PENALIZZA. È meglio essere troppo severi che troppo indulgenti.
 
 Restituisci SOLO il JSON (nessun testo extra).`;
   }

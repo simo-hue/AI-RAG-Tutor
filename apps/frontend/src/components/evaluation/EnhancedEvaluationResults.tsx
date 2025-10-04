@@ -51,7 +51,7 @@ export const EnhancedEvaluationResults = ({
   onRestart,
   className
 }: EnhancedEvaluationResultsProps) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'detailed' | 'improvement' | 'analytics' | 'progress'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'detailed' | 'improvement' | 'progress'>('overview');
 
   const { evaluation, contextUsed, evaluationId } = evaluationResult;
 
@@ -310,7 +310,6 @@ export const EnhancedEvaluationResults = ({
           { id: 'overview', label: 'Panoramica', icon: BarChart3, desc: 'Vista generale dei risultati' },
           { id: 'detailed', label: 'Analisi Dettagliata', icon: Target, desc: 'Breakdown per criterio' },
           { id: 'improvement', label: 'Piano di Miglioramento', icon: Lightbulb, desc: 'Suggerimenti personalizzati' },
-          { id: 'analytics', label: 'Analytics Avanzate', icon: PieChart, desc: 'Statistiche approfondite' },
           { id: 'progress', label: 'Contesto RAG', icon: Brain, desc: 'Analisi del contesto utilizzato' }
         ].map((tab) => (
           <button
@@ -576,167 +575,6 @@ export const EnhancedEvaluationResults = ({
                     <li>• Pratica scioglilingua e dizione</li>
                     <li>• Registra e riascolta per identificare pause</li>
                   </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {activeTab === 'analytics' && (
-        <div className="space-y-6">
-          {/* Performance Analytics Dashboard */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart className="w-5 h-5 text-primary-600" />
-                <span>Analytics delle Prestazioni</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Score Distribution Chart */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-secondary-900">Distribuzione Punteggi</h4>
-                  <div className="space-y-3">
-                    {criteriaData.map((criterion) => (
-                      <div key={criterion.name} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{criterion.name}</span>
-                          <span className="text-sm text-secondary-600">{criterion.value.toFixed(1)}/100</span>
-                        </div>
-                        <div className="relative">
-                          <div className="w-full bg-secondary-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                criterion.value >= 80 ? 'bg-success-500' :
-                                criterion.value >= 60 ? 'bg-warning-500' :
-                                criterion.value >= 40 ? 'bg-info-500' : 'bg-error-500'
-                              }`}
-                              style={{ width: `${criterion.value}%` }}
-                            />
-                          </div>
-                          {/* Score markers */}
-                          <div className="absolute top-0 left-0 w-full h-2 flex justify-between">
-                            {[2, 4, 6, 8].map(mark => (
-                              <div key={mark} className="w-px h-2 bg-white opacity-50" style={{ left: `${mark * 10}%` }} />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Statistical Analysis */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-secondary-900">Analisi Statistica</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3 bg-primary-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-primary-600">{analytics.average.toFixed(2)}</div>
-                      <div className="text-xs text-primary-700">Media Aritmetica</div>
-                    </div>
-                    <div className="p-3 bg-secondary-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-secondary-600">{analytics.median.toFixed(2)}</div>
-                      <div className="text-xs text-secondary-700">Mediana</div>
-                    </div>
-                    <div className="p-3 bg-info-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-info-600">{analytics.range.toFixed(2)}</div>
-                      <div className="text-xs text-info-700">Range Min-Max</div>
-                    </div>
-                    <div className="p-3 bg-purple-50 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-purple-600">{Math.sqrt(analytics.variance).toFixed(2)}</div>
-                      <div className="text-xs text-purple-700">Deviazione Standard</div>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-                    <h5 className="font-semibold text-secondary-900 mb-2">Interpretazione</h5>
-                    <div className="space-y-2 text-sm">
-                      <p>
-                        <strong>Consistenza:</strong> {analytics.range < 2 ? 'Alta' : analytics.range < 4 ? 'Media' : 'Bassa'}
-                        {analytics.range < 2 && ' - Performance equilibrata su tutti i criteri'}
-                        {analytics.range >= 2 && analytics.range < 4 && ' - Alcune aree eccellono rispetto ad altre'}
-                        {analytics.range >= 4 && ' - Significative differenze tra i criteri'}
-                      </p>
-                      <p>
-                        <strong>Potenziale di miglioramento:</strong> {
-                          criteriaData.filter(c => c.value < 80).length === 0 ? 'Ottimizzazione fine' :
-                          criteriaData.filter(c => c.value < 60).length > 2 ? 'Alto potenziale' : 'Miglioramento mirato'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Context Quality Analysis */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Brain className="w-5 h-5 text-purple-600" />
-                <span>Qualità del Contesto RAG</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <h5 className="font-semibold text-secondary-900">Metriche di Rilevanza</h5>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Similarità Media:</span>
-                      <Badge variant={evaluation.metadata.contextQuality.averageSimilarity > 0.7 ? 'success' : 'warning'}>
-                        {(evaluation.metadata.contextQuality.averageSimilarity * 100).toFixed(1)}%
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Chunk Utilizzati:</span>
-                      <span className="font-medium">{evaluation.metadata.contextQuality.chunksUsed}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Lunghezza Totale:</span>
-                      <span className="font-medium">{evaluation.metadata.contextQuality.totalContextLength.toLocaleString()} char</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h5 className="font-semibold text-secondary-900">Distribuzione Similarità</h5>
-                  <div className="space-y-2">
-                    {contextUsed.relevantChunks.map((chunk, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <span className="text-xs text-secondary-600">Chunk {index + 1}:</span>
-                        <Progress
-                          value={chunk.score * 100}
-                          className="h-2 flex-1"
-                          color={chunk.score > 0.8 ? 'success' : chunk.score > 0.6 ? 'warning' : 'error'}
-                        />
-                        <span className="text-xs font-medium">{(chunk.score * 100).toFixed(0)}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <h5 className="font-semibold text-secondary-900">Efficacia RAG</h5>
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {((evaluation.metadata.contextQuality.averageSimilarity + (contextUsed.totalScore / 10)) / 2 * 100).toFixed(0)}%
-                      </div>
-                      <div className="text-xs text-purple-700">Efficacia Complessiva</div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-secondary-600">
-                    {evaluation.metadata.contextQuality.averageSimilarity > 0.8
-                      ? 'Ottima corrispondenza tra presentazione e documento'
-                      : evaluation.metadata.contextQuality.averageSimilarity > 0.6
-                      ? 'Buona rilevanza del contesto utilizzato'
-                      : 'Il contesto potrebbe essere più pertinente'
-                    }
-                  </p>
                 </div>
               </div>
             </CardContent>

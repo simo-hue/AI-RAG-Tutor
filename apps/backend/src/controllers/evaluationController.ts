@@ -158,7 +158,13 @@ export const evaluationController = {
         documentId
       );
 
-      const response = {
+      const response: {
+        evaluation: typeof evaluationResult.evaluation;
+        contextUsed: typeof evaluationResult.contextUsed;
+        accuracyReport: typeof evaluationResult.accuracyReport;
+        evaluationId: string;
+        detailedFeedback?: any;
+      } = {
         evaluation: evaluationResult.evaluation,
         contextUsed: evaluationResult.contextUsed,
         accuracyReport: evaluationResult.accuracyReport, // Include detailed accuracy report if generated
@@ -228,10 +234,10 @@ export const evaluationController = {
             contextUsed: result.contextUsed,
             accuracyReport: result.accuracyReport, // Include detailed accuracy report if generated
           });
-        } catch (error) {
+        } catch (error: any) {
           errors.push({
             index: i,
-            error: error.message,
+            error: error?.message || 'Unknown error',
             transcription: evaluation.transcription.substring(0, 50) + '...',
           });
         }
