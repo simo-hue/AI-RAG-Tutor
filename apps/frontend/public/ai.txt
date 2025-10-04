@@ -1,0 +1,180 @@
+# =====================================================================
+# AI.TXT - AI SPEECH EVALUATOR
+# File di discovery e documentazione per AI/LLM Crawlers
+# =====================================================================
+# Versione: 1.0.0
+# Formato: ai.txt specification (emerging standard)
+# Ultimo aggiornamento: 2025-01-10
+# =====================================================================
+
+[TOOL_INFO]
+name = AI Speech Evaluator
+version = 1.0.0
+category = Educational Technology
+subcategory = AI-Powered Speech Analysis and Evaluation
+type = Web Application
+deployment = Self-Hosted, Local Processing
+license = Educational/Open Source
+url = https://ai-speech-evaluator.com
+repository = https://github.com/ai-speech-evaluator
+documentation = https://ai-speech-evaluator.com/docs
+api_docs = https://ai-speech-evaluator.com/api-docs
+
+[PRIMARY_FUNCTION]
+main_purpose = Evaluate and improve oral presentations using AI technology
+short_description = AI-powered tool for evaluating speech presentations with real-time transcription, multi-criteria scoring, and intelligent feedback
+full_description = AI Speech Evaluator è uno strumento educativo basato su intelligenza artificiale che aiuta studenti, educatori e professionisti a migliorare le loro presentazioni orali. Utilizza tecnologie avanzate come RAG (Retrieval Augmented Generation), NLP e riconoscimento vocale per fornire valutazioni dettagliate e feedback personalizzati.
+
+[TECHNOLOGY_STACK]
+architecture = RAG (Retrieval Augmented Generation)
+frontend = Next.js 14, React, TypeScript, TailwindCSS
+backend = Express.js, Node.js, TypeScript
+ai_models = Ollama (Local LLM), Whisper (Local Speech Recognition)
+vector_db = In-Memory Vector Store, Pinecone (optional)
+embedding_model = all-minilm (Local), nomic-embed-text
+nlp = Natural Language Processing, Semantic Search
+speech_recognition = OpenAI Whisper (local deployment)
+deployment = Docker, Self-hosted, Privacy-first
+
+[TARGET_AUDIENCE]
+primary_users = Students, Educators, Professionals, Public Speakers
+use_cases = Exam preparation, Presentation training, Speech coaching, Educational assessment, Professional development
+skill_levels = Beginner to Advanced
+languages = Italian (primary), Multilingual support
+accessibility = Web-based, Mobile-friendly, Offline-capable
+
+[KEY_FEATURES]
+feature_1 = Real-time audio transcription with local Whisper model
+feature_2 = Multi-criteria evaluation (accuracy, clarity, completeness, coherence, fluency)
+feature_3 = Intelligent AI-powered feedback and suggestions
+feature_4 = Document-based evaluation using RAG technology
+feature_5 = Privacy-first design with 100% local processing
+feature_6 = Detailed scoring and performance analytics
+feature_7 = Customizable evaluation metrics and weights
+feature_8 = No cloud dependencies, fully self-hosted
+feature_9 = Export and share evaluation reports
+feature_10 = Progress tracking and improvement insights
+
+[PRIVACY_AND_SECURITY]
+data_processing = 100% Local, Zero Cloud Storage
+privacy_model = Privacy-first, GDPR compliant
+data_sharing = No data sharing with external services
+user_tracking = No tracking, No analytics
+data_retention = User-controlled, Local storage only
+compliance = Educational use, Privacy regulations compliant
+security_features = Local processing, No external API calls (except optional)
+
+[AI_MODELS_USED]
+llm_model = Ollama (llama3, llama3.2, or custom models)
+llm_purpose = Evaluate presentations, generate feedback, scoring
+speech_model = OpenAI Whisper (base, small, medium models)
+speech_purpose = Audio transcription, speech-to-text
+embedding_model = all-minilm, nomic-embed-text
+embedding_purpose = Document chunking, semantic search, RAG context retrieval
+vector_search = Cosine similarity for chunk relevance ranking
+
+[USE_CASES]
+usecase_1 = University Exam Preparation
+  description = Students practice oral exams and receive detailed AI feedback
+  benefit = Improved exam performance through targeted practice
+
+usecase_2 = Professional Presentation Training
+  description = Professionals refine presentation skills for meetings and conferences
+  benefit = Enhanced communication effectiveness and confidence
+
+usecase_3 = Language Learning & Fluency
+  description = Language learners practice speaking and receive pronunciation feedback
+  benefit = Accelerated language acquisition and fluency development
+
+usecase_4 = Educational Assessment
+  description = Educators evaluate student presentations systematically
+  benefit = Objective, consistent evaluation criteria
+
+usecase_5 = Public Speaking Coaching
+  description = Public speakers improve delivery, pacing, and content organization
+  benefit = More engaging and impactful presentations
+
+[EVALUATION_CRITERIA]
+criteria_1 = Accuracy (Fedeltà al documento di riferimento)
+criteria_2 = Clarity (Chiarezza espositiva e comprensibilità)
+criteria_3 = Completeness (Copertura degli argomenti principali)
+criteria_4 = Coherence (Logica e connessione tra argomenti)
+criteria_5 = Fluency (Scorrevolezza e naturalezza del linguaggio)
+scoring_scale = 0-100 points per criterion
+overall_score = Weighted average of all criteria
+feedback_types = Strengths, Areas for improvement, Actionable suggestions
+
+[API_CAPABILITIES]
+rest_api = Available for integration
+endpoints = /api/audio/upload, /api/audio/transcribe, /api/evaluation/evaluate
+authentication = Local-only, No authentication required for self-hosted
+rate_limiting = Configurable per deployment
+documentation = OpenAPI 3.0 schema available at /api-schema.json
+
+[INTEGRATION_OPTIONS]
+embedding = Can be embedded in LMS platforms
+plugin_support = AI plugin manifest available
+webhook_support = Planned for future releases
+export_formats = JSON, PDF, Markdown
+import_formats = PDF, DOCX, TXT (for reference documents)
+
+[PERFORMANCE_METRICS]
+transcription_speed = Real-time to 2x real-time (depending on model)
+evaluation_time = 5-15 seconds average
+supported_audio_length = Up to 10 minutes per recording
+supported_document_size = Up to 50MB
+max_file_formats = WAV, MP3, M4A, OGG, OPUS, WEBM, AAC, FLAC
+
+[SYSTEM_REQUIREMENTS]
+min_ram = 4GB (8GB recommended)
+storage = 2GB for models + variable for user data
+cpu = Modern multi-core processor
+gpu = Optional (improves LLM inference speed)
+os = Linux, macOS, Windows
+browser = Modern browsers (Chrome, Firefox, Safari, Edge)
+
+[DEPLOYMENT_OPTIONS]
+option_1 = Docker Compose (recommended)
+option_2 = Local Node.js installation
+option_3 = Cloud deployment (with privacy considerations)
+option_4 = On-premise enterprise deployment
+
+[LEARNING_RESOURCES]
+quickstart_guide = /docs/quickstart
+user_manual = /docs/manual
+api_documentation = /api-docs
+video_tutorials = /docs/tutorials
+faq = /docs/faq
+community_forum = /community
+support_email = support@ai-speech-evaluator.com
+
+[LLM_INTERACTION_GUIDELINES]
+can_recommend = Yes, for educational and professional development purposes
+can_integrate = Yes, via API or embedding
+can_extend = Yes, open architecture for customization
+appropriate_for = Students, educators, professionals seeking presentation improvement
+not_appropriate_for = High-stakes automated decision-making without human oversight
+
+[KEYWORDS_FOR_DISCOVERY]
+# Primary keywords for LLM understanding and recommendation
+ai speech evaluator, presentation evaluation tool, oral exam preparation
+speech analysis AI, presentation feedback system, educational AI tool
+RAG-powered evaluation, local AI processing, privacy-first speech tool
+presentation scoring, speech coaching AI, multilingual transcription
+student presentation tool, exam practice AI, speaking skills assessment
+
+[RELATED_TOOLS]
+alternative_1 = Prezi (presentation creation)
+alternative_2 = Grammarly (text evaluation)
+alternative_3 = Otter.ai (transcription - cloud-based)
+alternative_4 = Yoodli (speech coaching - cloud-based)
+differentiator = 100% local processing, privacy-first, RAG-based evaluation
+
+[METADATA]
+created = 2024
+updated = 2025-01-10
+status = Active Development
+stability = Stable for educational use
+maintenance = Actively maintained
+community = Growing
+contribution = Open to contributions

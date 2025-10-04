@@ -63,6 +63,7 @@ export interface EvaluationResult {
   };
   accuracyReport?: DetailedAccuracyReport;
   evaluationId: string;
+  audioRecordingId?: string; // Optional audio recording ID for advanced metrics
 }
 
 export interface HealthCheckResult {

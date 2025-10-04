@@ -52,13 +52,22 @@ export const OllamaModelSelector = ({
 
   const checkStatus = async () => {
     try {
+      console.log('[OllamaModelSelector] Starting checkStatus...');
       setLoading(true);
       setError(null);
 
+      console.log('[OllamaModelSelector] Fetching /api/ollama/status...');
       const statusRes = await fetch('/api/ollama/status', {
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
         }
+      });
+
+      console.log('[OllamaModelSelector] Response received:', {
+        ok: statusRes.ok,
+        status: statusRes.status,
+        statusText: statusRes.statusText,
+        headers: Object.fromEntries(statusRes.headers.entries())
       });
 
       if (!statusRes.ok) {
@@ -67,16 +76,24 @@ export const OllamaModelSelector = ({
 
       const statusData = await statusRes.json();
 
-      console.log('Ollama status response:', statusData);
+      console.log('[OllamaModelSelector] Ollama status response:', statusData);
 
       if (statusData.success && statusData.data) {
+        console.log('[OllamaModelSelector] Status is successful, data:', statusData.data);
         setStatus(statusData.data);
 
         // Load models if Ollama is running and reachable
         if (statusData.data.running && statusData.data.apiReachable) {
+          console.log('[OllamaModelSelector] Ollama is running and reachable, loading models...');
           await loadModels();
+        } else {
+          console.log('[OllamaModelSelector] Ollama is not ready:', {
+            running: statusData.data.running,
+            apiReachable: statusData.data.apiReachable
+          });
         }
       } else {
+        console.warn('[OllamaModelSelector] Status response not successful:', statusData);
         setError(statusData.error || 'Risposta status non valida');
         // Set a default "not running" status
         setStatus({
@@ -87,7 +104,7 @@ export const OllamaModelSelector = ({
         });
       }
     } catch (err) {
-      console.error('Error checking Ollama status:', err);
+      console.error('[OllamaModelSelector] Error checking Ollama status:', err);
       const errorMessage = err instanceof Error ? err.message : 'Errore sconosciuto';
       setError(`Impossibile verificare lo stato di Ollama: ${errorMessage}`);
 
@@ -99,16 +116,23 @@ export const OllamaModelSelector = ({
         error: errorMessage
       });
     } finally {
+      console.log('[OllamaModelSelector] checkStatus completed, setting loading = false');
       setLoading(false);
     }
   };
 
   const loadModels = async () => {
     try {
+      console.log('[OllamaModelSelector] Starting loadModels...');
       const modelsRes = await fetch('/api/ollama/models', {
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
         }
+      });
+
+      console.log('[OllamaModelSelector] Models response received:', {
+        ok: modelsRes.ok,
+        status: modelsRes.status
       });
 
       if (!modelsRes.ok) {
@@ -117,20 +141,24 @@ export const OllamaModelSelector = ({
 
       const modelsData = await modelsRes.json();
 
-      console.log('Ollama models response:', modelsData);
+      console.log('[OllamaModelSelector] Ollama models response:', modelsData);
 
       if (modelsData.success && modelsData.data?.models) {
+        console.log('[OllamaModelSelector] Setting models:', modelsData.data.models);
         setModels(modelsData.data.models);
 
         // Only auto-select if no model is currently selected
         if (modelsData.data.models.length > 0 && !selectedModel) {
           const firstModel = modelsData.data.models[0].name;
+          console.log('[OllamaModelSelector] Auto-selecting first model:', firstModel);
           setSelectedModel(firstModel);
           onModelSelect?.(firstModel);
         }
+      } else {
+        console.warn('[OllamaModelSelector] Models response not successful:', modelsData);
       }
     } catch (err) {
-      console.error('Error loading models:', err);
+      console.error('[OllamaModelSelector] Error loading models:', err);
       const errorMessage = err instanceof Error ? err.message : 'Errore sconosciuto';
       setError(`Impossibile caricare i modelli: ${errorMessage}`);
     }

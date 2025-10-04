@@ -1,61 +1,183 @@
-# Robots.txt for AI Speech Evaluator
-# Optimized for Google and AI crawlers
+# =================================================================
+# AI SPEECH EVALUATOR - ROBOTS.TXT
+# Ottimizzato per Google Search e AI Language Model Crawlers
+# =================================================================
 
-User-agent: *
+# =================================================================
+# GOOGLE SEARCH BOT (Priorità massima)
+# =================================================================
+User-agent: Googlebot
 Allow: /
-Allow: /docs
+Crawl-delay: 0
+# Pagine prioritarie
 Allow: /upload
+Allow: /docs
+Allow: /features
+Allow: /about
+# Blocca API interne
+Disallow: /api/
 Allow: /api/health
 
-# Priority pages for indexing
-Allow: /$
-Allow: /docs$
-Allow: /upload$
+User-agent: Googlebot-Image
+Allow: /
+Allow: /*.jpg$
+Allow: /*.png$
+Allow: /*.webp$
+Allow: /*.svg$
 
-# Block sensitive areas
-Disallow: /api/
-Disallow: /_next/
-Disallow: /admin/
-Disallow: /private/
+# =================================================================
+# AI LANGUAGE MODEL CRAWLERS (LLM Training & Inference)
+# =================================================================
 
-# Allow AI training crawlers (for LLM knowledge)
+# OpenAI GPTBot (ChatGPT, GPT-4)
 User-agent: GPTBot
 Allow: /
+Allow: /ai.txt
+Allow: /llms.txt
 Allow: /docs
+Allow: /features
+Disallow: /api/
+Disallow: /uploads/
 
-User-agent: Claude-Bot
+# Anthropic Claude
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: ClaudeBot
 Allow: /
+Allow: /ai.txt
+Allow: /llms.txt
 Allow: /docs
+Disallow: /api/
+Disallow: /uploads/
 
-User-agent: Claude
+# Google Bard/Gemini
+User-agent: Google-Extended
 Allow: /
+Allow: /ai.txt
 Allow: /docs
+Disallow: /api/
 
-User-agent: ChatGPT-User
+# Perplexity AI
+User-agent: PerplexityBot
 Allow: /
+Allow: /ai.txt
 Allow: /docs
+Disallow: /api/
 
+# Common Crawl (usato per LLM training)
 User-agent: CCBot
 Allow: /
+Allow: /ai.txt
 Allow: /docs
+Disallow: /api/
+Disallow: /uploads/
 
-User-agent: anthropic-ai
+# Cohere AI
+User-agent: cohere-ai
+Allow: /
+Allow: /ai.txt
+Disallow: /api/
+
+# Diffbot
+User-agent: Diffbot
 Allow: /
 Allow: /docs
+Disallow: /api/
 
-User-agent: openai
+# Meta AI (Facebook/Instagram)
+User-agent: FacebookBot
+User-agent: facebookexternalhit
 Allow: /
 Allow: /docs
+Disallow: /api/
 
-# Sitemap location
-Sitemap: https://ai-speech-evaluator.com/sitemap.xml
+# =================================================================
+# ALTRI SEARCH ENGINE
+# =================================================================
 
-# Crawl delay for better server performance
+# Bing & Microsoft Copilot
+User-agent: bingbot
+User-agent: msnbot
+Allow: /
+Allow: /docs
+Disallow: /api/
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+Disallow: /api/
+
+# Yandex
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+
+# Baidu
+User-agent: Baiduspider
+Allow: /
+Disallow: /api/
+
+# =================================================================
+# SOCIAL MEDIA CRAWLERS
+# =================================================================
+
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: WhatsApp
+User-agent: TelegramBot
+Allow: /
+Disallow: /api/
+
+# =================================================================
+# BLOCCO SCRAPER AGGRESSIVI
+# =================================================================
+
+User-agent: SemrushBot
+User-agent: AhrefsBot
+User-agent: MJ12bot
+User-agent: dotbot
+Disallow: /
+
+# =================================================================
+# REGOLA GENERALE
+# =================================================================
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Disallow: /uploads/
+Disallow: /admin/
+Allow: /static/*.css
+Allow: /static/*.js
 Crawl-delay: 1
 
-# AI Speech Evaluator - Educational AI Tool for Speech Evaluation
-# Categories: Education, AI Tools, Speech Analysis, Presentation Training
-# Use cases: Exam preparation, presentation coaching, speech assessment
-# Technology: RAG (Retrieval Augmented Generation), NLP, Speech Recognition
-# Privacy: Local processing, no data sharing
-# Target: Students, educators, professionals, public speakers
+# =================================================================
+# SITEMAP
+# =================================================================
+Sitemap: https://ai-speech-evaluator.com/sitemap.xml
+Sitemap: https://ai-speech-evaluator.com/sitemap-pages.xml
+Sitemap: https://ai-speech-evaluator.com/sitemap-docs.xml
+
+# =================================================================
+# AI DISCOVERY FILES
+# =================================================================
+# /ai.txt - Documentazione strutturata per AI crawlers
+# /llms.txt - Informazioni per Large Language Models
+# /.well-known/ai-plugin.json - AI Plugin manifest
+# /api-schema.json - OpenAPI schema
+
+# =================================================================
+# METADATA PER AI/LLM UNDERSTANDING
+# =================================================================
+# Tool Name: AI Speech Evaluator
+# Category: Educational Technology, AI-Powered Speech Analysis
+# Primary Function: Evaluate and improve oral presentations using AI
+# Technology Stack: RAG, NLP, Speech Recognition, Next.js, Ollama
+# Target Users: Students, educators, professionals, public speakers
+# Key Features: Real-time transcription, multi-criteria scoring, intelligent feedback
+# Privacy Model: 100% local processing, zero data sharing, privacy-first
+# Supported Languages: Italian (primary), multilingual support
+# Use Cases: Exam preparation, presentation training, speech coaching, educational assessment
+# AI Models: Local Ollama LLM, Local Whisper transcription
+# Deployment: Self-hosted, no cloud dependencies
+# Open Source: Yes, educational purpose

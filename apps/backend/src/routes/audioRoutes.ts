@@ -154,4 +154,11 @@ router.get('/:id/status',
   audioController.getProcessingStatus
 );
 
+// Advanced audio analysis endpoint
+router.post('/:id/analyze',
+  generalLimiter,
+  validateAudioId,
+  audioController.analyzeAudioMetrics
+);
+
 export { router as audioRoutes };

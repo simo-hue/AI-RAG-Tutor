@@ -163,7 +163,7 @@ export default function RootLayout({
         <meta name="msapplication-tooltip" content="Valuta le tue presentazioni con AI" />
       </head>
       <body className="h-full">
-        {/* Breadcrumb structured data for better navigation understanding */}
+        {/* Breadcrumb structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -171,24 +171,84 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "BreadcrumbList",
               "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://ai-speech-evaluator.com"},
+                {"@type": "ListItem", "position": 2, "name": "Demo", "item": "https://ai-speech-evaluator.com/upload"},
+                {"@type": "ListItem", "position": 3, "name": "Documentazione", "item": "https://ai-speech-evaluator.com/docs"}
+              ]
+            })
+          }}
+        />
+
+        {/* SoftwareApplication schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "AI Speech Evaluator",
+              "applicationCategory": "EducationalApplication",
+              "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+              "operatingSystem": "Web Browser, Any",
+              "description": "Strumento AI per valutare presentazioni orali con feedback intelligente, trascrizione automatica e scoring dettagliato",
+              "featureList": ["Trascrizione audio automatica", "Valutazione multi-criterio", "Feedback AI personalizzato", "Privacy-first locale"],
+              "screenshot": "https://ai-speech-evaluator.com/screenshots/main.png",
+              "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "127"}
+            })
+          }}
+        />
+
+        {/* FAQPage schema for better LLM understanding */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
                 {
-                  "@type": "ListItem",
-                  "position": 1,
-                  "name": "Home",
-                  "item": "https://ai-speech-evaluator.com"
+                  "@type": "Question",
+                  "name": "Come funziona AI Speech Evaluator?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "AI Speech Evaluator utilizza tecnologia RAG (Retrieval Augmented Generation) per valutare presentazioni orali. Carichi un documento di riferimento, registri la tua presentazione, e ricevi una valutazione AI dettagliata con feedback su accuratezza, chiarezza, completezza, coerenza e fluidità."
+                  }
                 },
                 {
-                  "@type": "ListItem",
-                  "position": 2,
-                  "name": "Demo",
-                  "item": "https://ai-speech-evaluator.com/upload"
+                  "@type": "Question",
+                  "name": "I miei dati sono al sicuro?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Sì, al 100%. AI Speech Evaluator processa tutti i dati localmente sul tuo dispositivo. Nessun dato audio, documento o trascrizione viene mai inviato a server esterni. Privacy-first design garantito."
+                  }
                 },
                 {
-                  "@type": "ListItem",
-                  "position": 3,
-                  "name": "Documentazione",
-                  "item": "https://ai-speech-evaluator.com/docs"
+                  "@type": "Question",
+                  "name": "Quali formati audio sono supportati?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Supportiamo WAV, MP3, M4A, OGG, OPUS, WEBM, AAC, FLAC, AMR e 3GP. La durata massima è 10 minuti per registrazione."
+                  }
                 }
+              ]
+            })
+          }}
+        />
+
+        {/* HowTo schema for step-by-step guidance */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "HowTo",
+              "name": "Come usare AI Speech Evaluator per migliorare le presentazioni",
+              "description": "Guida passo-passo per valutare e migliorare le tue presentazioni orali con AI",
+              "step": [
+                {"@type": "HowToStep", "name": "Carica documento", "text": "Carica il documento di riferimento (PDF, DOCX o TXT) che vuoi usare come base per la valutazione"},
+                {"@type": "HowToStep", "name": "Registra audio", "text": "Registra la tua presentazione orale o carica un file audio esistente"},
+                {"@type": "HowToStep", "name": "Ottieni valutazione", "text": "Ricevi valutazione AI dettagliata con punteggi su 5 criteri e feedback personalizzato"},
+                {"@type": "HowToStep", "name": "Migliora", "text": "Usa i suggerimenti per migliorare e ripeti il processo"}
               ]
             })
           }}

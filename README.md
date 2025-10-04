@@ -4,6 +4,8 @@ Un sistema **completamente locale** e **intelligente** di valutazione speech-to-
 
 **🚀 STATUS: PRODUZIONE-READY** - Sistema completo, testato e ottimizzato con gestione automatica di Ollama, selezione modelli AI e supporto multi-lingua
 
+📖 **Quick Links:** [📋 Docs Index](./DOCS_INDEX.md) | [🚀 Installation](./INSTALLATION_GUIDE.md) | [🧪 Testing Guide](./AUDIO_FEATURES_DOCUMENTATION.md#testing) | [🤝 Contributing](./CONTRIBUTING.md) | [📝 Changelog](./CHANGELOG.md)
+
 ## 🎯 Caratteristiche Uniche
 
 ### 📊 **Valutazione Rigorosa Basata sul Documento**
@@ -18,6 +20,18 @@ Un sistema **completamente locale** e **intelligente** di valutazione speech-to-
 - 📊 **Progress Bar Real-time**: Monitora il download con barra di progresso
 - 🔄 **Switch Istantaneo**: Cambia modello al volo senza restart
 - 💡 **Raccomandazioni Smart**: Suggerimenti sui modelli migliori per caso d'uso
+
+### 🎙️ **NUOVO: Analisi Audio Avanzata (v2.0.0)** ⭐
+- 📈 **Speech Rate Analysis**: Calcolo WPM (Words Per Minute) con raccomandazioni personalizzate
+- ⏸️ **Pause Detection**: Analisi pause (brevi/medie/lunghe) e distribuzione ottimale
+- 🗣️ **Filler Words Detection**: Rilevamento automatico di 18 filler words italiani (ehm, uhm, cioè, tipo, ecc.)
+- 🎵 **Audio Quality Metrics**: Analisi volume, pitch variation, e Signal-to-Noise Ratio
+- 🏆 **Speaking Performance Score**: Punteggio complessivo 0-100 con strengths/weaknesses
+- 💡 **AI-Powered Recommendations**: Suggerimenti specifici per migliorare ogni aspetto
+- 📊 **Beautiful Visualizations**: UI professionale con grafici, gauge e comparison badges
+- 🧪 **Production-Ready Testing**: 20+ unit tests, integration tests, E2E tests con Playwright
+
+**[📖 Documentazione Completa](./AUDIO_FEATURES_DOCUMENTATION.md)** | **[🚀 Installation Guide](./INSTALLATION_GUIDE.md)**
 
 ---
 
@@ -210,4 +224,51 @@ curl http://localhost:3001/api/documents/<document-id>
 
 # Se chunkCount è 0, ri-carica il documento
 ```
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+```bash
+cd apps/backend
+npm test                    # Run all unit tests
+npm run test:watch          # Watch mode
+npm run test:ui             # Visual UI
+npm run test:coverage       # Coverage report
+```
+
+### Integration Tests
+
+```bash
+cd apps/backend
+npm run test:integration    # Run integration tests
+```
+
+### E2E Tests (Playwright)
+
+```bash
+# From root directory
+npm run test:e2e            # Run all E2E tests
+npm run test:e2e:ui         # Interactive UI mode
+npm run test:e2e:debug      # Debug mode
+npm run test:e2e:report     # View HTML report
+```
+
+**Coverage Target:** >80% for critical features
+
+📖 **[Complete Testing Guide](./AUDIO_FEATURES_DOCUMENTATION.md#testing)**
+
+---
+
+## 📚 Documentazione Completa
+
+- **[📋 DOCS_INDEX.md](./DOCS_INDEX.md)** - Indice di tutta la documentazione
+- **[🎙️ AUDIO_FEATURES_DOCUMENTATION.md](./AUDIO_FEATURES_DOCUMENTATION.md)** - Guida completa features audio
+- **[🚀 INSTALLATION_GUIDE.md](./INSTALLATION_GUIDE.md)** - Installazione dettagliata
+- **[📝 CHANGELOG.md](./CHANGELOG.md)** - Storico versioni e modifiche
+- **[📊 IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Riepilogo implementazione v2.0.0
+
+---
 

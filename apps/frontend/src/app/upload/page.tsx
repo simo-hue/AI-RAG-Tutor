@@ -187,7 +187,7 @@ export default function UploadPage() {
         </div>
 
         {/* Configuration Panel - Always visible */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Ollama Model Selector */}
           <OllamaModelSelector
             onModelSelect={handleModelSelect}
@@ -205,7 +205,7 @@ export default function UploadPage() {
         </div>
 
         {/* Main Content */}
-        <div className="space-y-8">
+        <div className="space-y-8 mt-8">
           {/* Step 1: Upload Documents */}
           {currentStep === 1 && (
             <Card>

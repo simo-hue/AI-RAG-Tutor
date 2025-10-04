@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { audioService } from '../services/audioService';
 import { AppError } from '../middleware/errorHandler';
+import { AudioAnalysisService } from '../services/audioAnalysisService';
 
 export const audioController = {
   async uploadAudio(req: Request, res: Response, next: NextFunction) {
@@ -97,6 +98,48 @@ export const audioController = {
       res.json({
         success: true,
         data: status,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Analyze audio with advanced metrics
+   * POST /api/audio/:id/analyze
+   */
+  async analyzeAudioMetrics(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+
+      // Get audio recording
+      const audioRecording = await audioService.getAudioRecording(id);
+
+      if (!audioRecording.transcription) {
+        throw new AppError('Audio must be transcribed before analysis', 400);
+      }
+
+      // Initialize analysis service
+      const analysisService = new AudioAnalysisService();
+
+      // Perform advanced analysis
+      const audioMetrics = await analysisService.analyzeAudio(
+        audioRecording.transcription,
+        audioRecording.duration,
+        undefined, // segments - can be passed from WhisperService if available
+        undefined  // audioBuffer - can be added for full audio analysis
+      );
+
+      // Store metrics with audio recording
+      audioRecording.audioMetrics = audioMetrics;
+
+      res.json({
+        success: true,
+        data: {
+          audioRecordingId: id,
+          audioMetrics,
+        },
+        message: 'Audio analysis completed successfully',
       });
     } catch (error) {
       next(error);

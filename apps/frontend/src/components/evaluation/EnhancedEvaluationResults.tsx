@@ -150,34 +150,34 @@ export const EnhancedEvaluationResults = ({
       range: Math.max(...scores) - Math.min(...scores),
       variance: scores.reduce((sum, score) => sum + Math.pow(score - evaluation.overallScore, 2), 0) / scores.length,
       weightedScore,
-      strengths: criteriaData.filter(c => c.value >= 7).length,
-      weaknesses: criteriaData.filter(c => c.value < 5).length,
+      strengths: criteriaData.filter(c => c.value >= 70).length,
+      weaknesses: criteriaData.filter(c => c.value < 50).length,
       distribution: {
-        excellent: criteriaData.filter(c => c.value >= 8).length,
-        good: criteriaData.filter(c => c.value >= 6 && c.value < 8).length,
-        fair: criteriaData.filter(c => c.value >= 4 && c.value < 6).length,
-        poor: criteriaData.filter(c => c.value < 4).length
+        excellent: criteriaData.filter(c => c.value >= 80).length,
+        good: criteriaData.filter(c => c.value >= 60 && c.value < 80).length,
+        fair: criteriaData.filter(c => c.value >= 40 && c.value < 60).length,
+        poor: criteriaData.filter(c => c.value < 40).length
       }
     };
   }, [criteriaData, evaluation.overallScore]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-success-600 bg-success-50 border-success-200';
-    if (score >= 6) return 'text-warning-600 bg-warning-50 border-warning-200';
+    if (score >= 80) return 'text-success-600 bg-success-50 border-success-200';
+    if (score >= 60) return 'text-warning-600 bg-warning-50 border-warning-200';
     return 'text-error-600 bg-error-50 border-error-200';
   };
 
   const getScoreLabel = (score: number) => {
-    if (score >= 8) return 'Eccellente';
-    if (score >= 6) return 'Buono';
-    if (score >= 4) return 'Sufficiente';
+    if (score >= 80) return 'Eccellente';
+    if (score >= 60) return 'Buono';
+    if (score >= 40) return 'Sufficiente';
     return 'Da migliorare';
   };
 
   const getPerformanceLevel = (score: number) => {
-    if (score >= 8) return { label: 'Prestazione Eccellente', icon: Award, color: 'text-success-600' };
-    if (score >= 6) return { label: 'Buona Prestazione', icon: TrendingUp, color: 'text-warning-600' };
-    if (score >= 4) return { label: 'Prestazione Sufficiente', icon: Minus, color: 'text-info-600' };
+    if (score >= 80) return { label: 'Prestazione Eccellente', icon: Award, color: 'text-success-600' };
+    if (score >= 60) return { label: 'Buona Prestazione', icon: TrendingUp, color: 'text-warning-600' };
+    if (score >= 40) return { label: 'Prestazione Sufficiente', icon: Minus, color: 'text-info-600' };
     return { label: 'Necessita Miglioramenti', icon: TrendingDown, color: 'text-error-600' };
   };
 
@@ -187,14 +187,14 @@ export const EnhancedEvaluationResults = ({
     const score = criterion.value;
     const suggestions = [];
 
-    if (score < 4) {
+    if (score < 40) {
       suggestions.push(`🎯 **Priorità Alta**: Focalizzati sul miglioramento di ${criterion.name.toLowerCase()}`);
       suggestions.push(`📚 Studia approfonditamente gli aspetti legati a ${criterion.description.toLowerCase()}`);
       suggestions.push(`🔄 Ripeti l'esercizio concentrandoti specificamente su questo criterio`);
-    } else if (score < 6) {
+    } else if (score < 60) {
       suggestions.push(`⚡ **Miglioramento Moderato**: ${criterion.name} può essere potenziato`);
       suggestions.push(`🎨 Lavora sui dettagli per perfezionare ${criterion.description.toLowerCase()}`);
-    } else if (score < 8) {
+    } else if (score < 80) {
       suggestions.push(`✨ **Eccellente Base**: ${criterion.name} è già buono, perfeziona i dettagli`);
       suggestions.push(`🚀 Piccoli aggiustamenti possono portarti all'eccellenza`);
     } else {
@@ -254,7 +254,7 @@ export const EnhancedEvaluationResults = ({
                 <div className="text-6xl font-bold mb-2">
                   {evaluation.overallScore.toFixed(1)}
                 </div>
-                <div className="text-2xl opacity-60">/10</div>
+                <div className="text-2xl opacity-60">/100</div>
               </div>
               <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-lg px-4 py-1">
                 {getScoreLabel(evaluation.overallScore)}
@@ -266,7 +266,7 @@ export const EnhancedEvaluationResults = ({
           <div className="mt-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-primary-200">Punteggio Complessivo</span>
-              <span className="text-sm text-primary-200">{(evaluation.overallScore * 10).toFixed(0)}%</span>
+              <span className="text-sm text-primary-200">{((evaluation.overallScore / 10) * 100).toFixed(0)}%</span>
             </div>
             <div className="w-full bg-white/20 rounded-full h-3">
               <div
@@ -357,18 +357,18 @@ export const EnhancedEvaluationResults = ({
                 <CardContent className="pt-4">
                   <div className="space-y-3">
                     <Progress
-                      value={(criterion.value / 10) * 100}
+                      value={criterion.value}
                       className="h-3"
-                      color={criterion.value >= 7 ? 'success' : criterion.value >= 5 ? 'warning' : 'error'}
+                      color={criterion.value >= 70 ? 'success' : criterion.value >= 50 ? 'warning' : 'error'}
                     />
                     <p className="text-sm text-secondary-600 leading-relaxed">
                       {criterion.description}
                     </p>
                     <div className="text-xs text-secondary-500 bg-secondary-50 rounded-lg p-2">
-                      {criterion.value >= 8 && criterion.details.excellent}
-                      {criterion.value >= 6 && criterion.value < 8 && criterion.details.good}
-                      {criterion.value >= 4 && criterion.value < 6 && criterion.details.fair}
-                      {criterion.value < 4 && criterion.details.poor}
+                      {criterion.value >= 80 && criterion.details.excellent}
+                      {criterion.value >= 60 && criterion.value < 80 && criterion.details.good}
+                      {criterion.value >= 40 && criterion.value < 60 && criterion.details.fair}
+                      {criterion.value < 40 && criterion.details.poor}
                     </div>
                   </div>
                 </CardContent>
@@ -456,7 +456,7 @@ export const EnhancedEvaluationResults = ({
                     Azioni Prioritarie
                   </h4>
                   {criteriaData
-                    .filter(c => c.value < 6)
+                    .filter(c => c.value < 60)
                     .sort((a, b) => a.value - b.value)
                     .map((criterion, index) => (
                       <div key={criterion.name} className="p-4 bg-error-50 border border-error-200 rounded-lg">
@@ -466,7 +466,7 @@ export const EnhancedEvaluationResults = ({
                           </div>
                           <div className="flex-1">
                             <h5 className="font-semibold text-error-900 mb-1">
-                              Migliorare {criterion.name} (attuale: {criterion.value.toFixed(1)}/10)
+                              Migliorare {criterion.name} (attuale: {criterion.value.toFixed(1)}/100)
                             </h5>
                             <p className="text-sm text-error-800 mb-3">{criterion.description}</p>
                             <div className="space-y-2">
@@ -479,7 +479,7 @@ export const EnhancedEvaluationResults = ({
                             <div className="mt-3 flex items-center space-x-2">
                               <Badge variant="error" size="sm">Priorità Alta</Badge>
                               <span className="text-xs text-error-700">
-                                Impatto stimato: +{(6 - criterion.value).toFixed(1)} punti
+                                Impatto stimato: +{(60 - criterion.value).toFixed(1)} punti
                               </span>
                             </div>
                           </div>
@@ -487,7 +487,7 @@ export const EnhancedEvaluationResults = ({
                       </div>
                     ))}
 
-                  {criteriaData.filter(c => c.value < 6).length === 0 && (
+                  {criteriaData.filter(c => c.value < 60).length === 0 && (
                     <div className="p-6 bg-success-50 border border-success-200 rounded-lg text-center">
                       <CheckCircle2 className="w-12 h-12 text-success-600 mx-auto mb-3" />
                       <h5 className="font-semibold text-success-900 mb-2">Ottimo Lavoro!</h5>
@@ -505,7 +505,7 @@ export const EnhancedEvaluationResults = ({
                     Punti di Forza
                   </h4>
                   {criteriaData
-                    .filter(c => c.value >= 7)
+                    .filter(c => c.value >= 70)
                     .sort((a, b) => b.value - a.value)
                     .map((criterion) => (
                       <div key={criterion.name} className="p-3 bg-success-50 border border-success-200 rounded-lg">
@@ -526,7 +526,7 @@ export const EnhancedEvaluationResults = ({
                       Suggerimento Strategico
                     </h5>
                     <p className="text-sm text-info-800">
-                      Focalizzati sui {criteriaData.filter(c => c.value < 6).length} criteri con priorità più alta
+                      Focalizzati sui {criteriaData.filter(c => c.value < 60).length} criteri con priorità più alta
                       per ottenere il miglioramento più significativo nel punteggio complessivo.
                     </p>
                   </div>
@@ -603,17 +603,17 @@ export const EnhancedEvaluationResults = ({
                       <div key={criterion.name} className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">{criterion.name}</span>
-                          <span className="text-sm text-secondary-600">{criterion.value.toFixed(1)}/10</span>
+                          <span className="text-sm text-secondary-600">{criterion.value.toFixed(1)}/100</span>
                         </div>
                         <div className="relative">
                           <div className="w-full bg-secondary-200 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full transition-all duration-500 ${
-                                criterion.value >= 8 ? 'bg-success-500' :
-                                criterion.value >= 6 ? 'bg-warning-500' :
-                                criterion.value >= 4 ? 'bg-info-500' : 'bg-error-500'
+                                criterion.value >= 80 ? 'bg-success-500' :
+                                criterion.value >= 60 ? 'bg-warning-500' :
+                                criterion.value >= 40 ? 'bg-info-500' : 'bg-error-500'
                               }`}
-                              style={{ width: `${(criterion.value / 10) * 100}%` }}
+                              style={{ width: `${criterion.value}%` }}
                             />
                           </div>
                           {/* Score markers */}
@@ -661,8 +661,8 @@ export const EnhancedEvaluationResults = ({
                       </p>
                       <p>
                         <strong>Potenziale di miglioramento:</strong> {
-                          criteriaData.filter(c => c.value < 8).length === 0 ? 'Ottimizzazione fine' :
-                          criteriaData.filter(c => c.value < 6).length > 2 ? 'Alto potenziale' : 'Miglioramento mirato'
+                          criteriaData.filter(c => c.value < 80).length === 0 ? 'Ottimizzazione fine' :
+                          criteriaData.filter(c => c.value < 60).length > 2 ? 'Alto potenziale' : 'Miglioramento mirato'
                         }
                       </p>
                     </div>
@@ -846,7 +846,7 @@ export const EnhancedEvaluationResults = ({
                   </div>
                   <div className="text-right">
                     <div className={`text-3xl font-bold ${criterion.color}`}>
-                      {criterion.value.toFixed(1)}/10
+                      {criterion.value.toFixed(1)}/100
                     </div>
                     <Badge className={`${getScoreColor(criterion.value)} border mt-1`}>
                       {getScoreLabel(criterion.value)}
@@ -859,12 +859,12 @@ export const EnhancedEvaluationResults = ({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Prestazione</span>
-                      <span className="text-sm text-secondary-600">{(criterion.value * 10).toFixed(0)}%</span>
+                      <span className="text-sm text-secondary-600">{criterion.value.toFixed(0)}%</span>
                     </div>
                     <Progress
-                      value={(criterion.value / 10) * 100}
+                      value={criterion.value}
                       className="h-4"
-                      color={criterion.value >= 7 ? 'success' : criterion.value >= 5 ? 'warning' : 'error'}
+                      color={criterion.value >= 70 ? 'success' : criterion.value >= 50 ? 'warning' : 'error'}
                     />
                   </div>
 

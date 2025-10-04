@@ -155,7 +155,7 @@ export const LanguageSelector = ({
           {showAutoDetection && (
             <div className="flex flex-col items-end space-y-1">
               <Button
-                variant={mode === 'auto' ? 'default' : 'outline'}
+                variant={mode === 'auto' ? 'primary' : 'outline'}
                 size="sm"
                 onClick={handleModeToggle}
                 disabled={!detectedLanguage}

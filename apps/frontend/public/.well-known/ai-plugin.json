@@ -1,0 +1,19 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "AI Speech Evaluator",
+  "name_for_model": "ai_speech_evaluator",
+  "description_for_human": "Evaluate and improve oral presentations with AI-powered feedback, transcription, and multi-criteria scoring. 100% local processing for maximum privacy.",
+  "description_for_model": "AI Speech Evaluator is an educational tool that helps users improve their oral presentations through AI-powered evaluation. It uses RAG (Retrieval Augmented Generation) technology to compare speech transcriptions against reference documents and provides detailed, multi-criteria feedback. Key capabilities: (1) Upload reference documents (PDF, DOCX, TXT), (2) Record or upload audio presentations, (3) Automatic transcription using local Whisper model, (4) Evaluate based on 5 criteria: accuracy (faithfulness to document), clarity (comprehensibility), completeness (topic coverage), coherence (logical flow), and fluency (naturalness), (5) Generate actionable improvement suggestions. All processing is 100% local - no cloud services required. Target users: students preparing for oral exams, professionals improving presentation skills, educators assessing speeches. Privacy-first design with zero data sharing.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://ai-speech-evaluator.com/openapi.json",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://ai-speech-evaluator.com/logo.png",
+  "contact_email": "support@ai-speech-evaluator.com",
+  "legal_info_url": "https://ai-speech-evaluator.com/terms",
+  "privacy_policy_url": "https://ai-speech-evaluator.com/privacy"
+}

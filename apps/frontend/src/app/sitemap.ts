@@ -107,5 +107,61 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 0.3,
     },
+    // AI-specific discovery files (high priority for LLM crawlers)
+    {
+      url: `${baseUrl}/ai.txt`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/llms.txt`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/robots.txt`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    // Feature pages for better indexing
+    {
+      url: `${baseUrl}/features`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/features`,
+          en: `${baseUrl}/en/features`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/privacy`,
+          en: `${baseUrl}/en/privacy`,
+        },
+      },
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+      alternates: {
+        languages: {
+          it: `${baseUrl}/it/terms`,
+          en: `${baseUrl}/en/terms`,
+        },
+      },
+    },
   ]
 }
